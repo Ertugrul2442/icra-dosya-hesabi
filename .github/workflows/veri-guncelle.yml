@@ -1,0 +1,130 @@
+name: Oranları güncelle
+
+# Her gün Merkez Bankası'nın reeskont/avans tablosuna ve Harçlar Kanunu'nun resmî metnine bakar.
+# Değişiklik varsa (ya da yeni ayın ilk kontrolüyse) siteyi yeniden kurar, testlerden GEÇERSE
+# yayına gönderir. veri_cek.py çıkış kodları:
+#   0 yazdı | 3 değişiklik yok (hiçbir şey yapılmaz) | 1 çekilemedi ya da denetim geçmedi
+#   -> iş akışı düşer, GitHub e-posta atar, eski veri yayında kalır.
+# Ayın ilk kontrolü değişiklik olmasa da "kontrol" tarihini ilerletip commit atar: hem sayfa
+# robotun durduğunu anlayabilsin, hem GitHub 60 gün commitsiz depoda zamanlayıcıyı kapatmasın.
+on:
+  schedule:
+    - cron: "17 4 * * *"      # UTC 04:17 = TR 07:17, her gün
+  workflow_dispatch:
+    inputs:
+      hatirlatma_denemesi:
+        description: "Hatırlatma (issue) yolunu dene: deneme kaydı açıp hemen kapatır"
+        type: boolean
+        default: false
+      yayin_denemesi:
+        description: "Yayın yolunu dene: docs/robot-denemesi.txt yazıp gönderir (sonra elle silinir)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: veri-guncelle
+  cancel-in-progress: false
+
+jobs:
+  guncelle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: PDF okuyucu
+        run: pip install --quiet pymupdf
+
+      - name: Okuyucuların kendi testleri
+        run: python test_veri_cek.py
+
+      - name: Resmî kaynaklardan çek
+        id: cek
+        run: |
+          set +e
+          python veri_cek.py
+          kod=$?
+          set -e
+          case $kod in
+            0) echo "yeni=evet"  >> "$GITHUB_OUTPUT"; echo "Yazıldı: $(cat veri/.commit_mesaji)" ;;
+            3) echo "yeni=hayir" >> "$GITHUB_OUTPUT"; echo "Değişiklik yok, yapacak bir şey yok." ;;
+            *) echo "::error::veri_cek.py $kod koduyla düştü - veri GÜNCELLENMEDİ, eski veri yayında duruyor"
+               exit 1 ;;
+          esac
+
+      - name: Sayfayı yeniden kur
+        if: steps.cek.outputs.yeni == 'evet'
+        run: node site_yap.js
+
+      - name: Tarayıcı kur
+        if: steps.cek.outputs.yeni == 'evet'
+        run: |
+          pip install --quiet playwright
+          python -m playwright install --with-deps chromium
+
+      - name: Testler (geçmezse yayına çıkmaz)
+        if: steps.cek.outputs.yeni == 'evet'
+        env:
+          CI: "1"
+        run: |
+          node test_hesap.js
+          node test_veri.js
+          node test_site.js
+          python test_tarayici.py
+
+      - name: İşle ve yayına gönder
+        if: steps.cek.outputs.yeni == 'evet'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add veri/oranlar.json docs/
+          if git diff --cached --quiet; then
+            echo "::warning::veri_cek.py yeni veri dedi ama dosyalarda fark yok - beklenmedik"
+            exit 0
+          fi
+          git commit -m "$(cat veri/.commit_mesaji)"
+          git push
+          echo "### Yayına gitti: $(cat veri/.commit_mesaji)" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Yayın yolu denemesi
+        if: inputs.yayin_denemesi
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git pull --rebase --quiet
+          echo "robot yayin denemesi $(date -u '+%Y-%m-%dT%H:%M:%SZ') run=$GITHUB_RUN_ID" > docs/robot-denemesi.txt
+          git add docs/robot-denemesi.txt
+          git commit -m "deneme: robotun yayın yolu (silinecek)"
+          git push
+
+      - name: Avukatlık ücret tarifesi hatırlatması
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DENEME: ${{ inputs.hatirlatma_denemesi && '1' || '' }}
+        run: |
+          set +e
+          node aaut_kontrol.js
+          kod=$?
+          set -e
+          if [ $kod -eq 0 ]; then exit 0; fi
+          if [ $kod -ne 2 ]; then echo "::error::aaut_kontrol.js $kod koduyla düştü"; exit 1; fi
+          baslik="$(head -1 aaut_hatirlatma.md | sed 's/^# //')"
+          acik=$(gh issue list --state open --search "\"$baslik\" in:title" --json number --jq 'length')
+          if [ "$acik" != "0" ]; then echo "Açık hatırlatma zaten var."; exit 0; fi
+          adres=$(gh issue create --title "$baslik" --body-file aaut_hatirlatma.md)
+          echo "Hatırlatma açıldı: $adres"
+          echo "### Hatırlatma açıldı: $adres" >> "$GITHUB_STEP_SUMMARY"
+          if [ -n "$DENEME" ]; then
+            gh issue close "$adres" --comment "Deneme kaydı: hatırlatma yolu çalışıyor, kapatıldı."
+          fi

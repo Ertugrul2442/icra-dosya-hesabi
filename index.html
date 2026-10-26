@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>İcra Dosya Hesabı</title>
+<style>
+:root{--zemin:#f4f5f7;--kart:#fff;--yazi:#1d2430;--soluk:#5b6576;--cizgi:#d9dde4;--vurgu:#1f5fbf;--vurgu-acik:#e8f0fc;
+--uyari:#8a5a00;--uyari-zemin:#fff6e0;--hata:#a3262a;--hata-zemin:#fdeceb;--giris:#fff;--baslik:#e9ecf1}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--zemin:#15181d;--kart:#1e232a;--yazi:#e6e9ee;--soluk:#a1aab8;
+--cizgi:#343b46;--vurgu:#7fb0ff;--vurgu-acik:#1f2d44;--uyari:#f0c060;--uyari-zemin:#3a2f12;--hata:#ff8a85;--hata-zemin:#3d1c1c;--giris:#171b21;--baslik:#2a313b}}
+:root[data-theme="dark"]{--zemin:#15181d;--kart:#1e232a;--yazi:#e6e9ee;--soluk:#a1aab8;--cizgi:#343b46;--vurgu:#7fb0ff;--vurgu-acik:#1f2d44;
+--uyari:#f0c060;--uyari-zemin:#3a2f12;--hata:#ff8a85;--hata-zemin:#3d1c1c;--giris:#171b21;--baslik:#2a313b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--zemin);color:var(--yazi);font:15px/1.45 "Segoe UI",system-ui,-apple-system,Arial,sans-serif}
+main{max-width:1180px;margin:0 auto;padding:20px 16px 60px}
+h1{font-size:24px;margin:0 0 4px}
+h2{font-size:17px;margin:0 0 12px}
+h3{font-size:15px;margin:18px 0 8px}
+.alt{color:var(--soluk);margin:0 0 18px;font-size:14px}
+.kart{background:var(--kart);border:1px solid var(--cizgi);border-radius:10px;padding:16px;margin-bottom:16px}
+.izgara{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+label{display:block;font-size:13px;color:var(--soluk);margin-bottom:3px}
+input,select{font:inherit;color:var(--yazi);background:var(--giris);border:1px solid var(--cizgi);border-radius:6px;padding:6px 8px;width:100%;min-width:0}
+input:focus,select:focus{outline:2px solid var(--vurgu);outline-offset:-1px}
+input:disabled,select:disabled{opacity:.45}
+input[type=checkbox]{width:auto}
+.tablo-kap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%}
+th,td{padding:6px;border-bottom:1px solid var(--cizgi);text-align:left;vertical-align:top}
+th{font-size:12.5px;color:var(--soluk);font-weight:600;white-space:nowrap}
+td.s,th.s{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.giris td{padding:4px}
+.giris input,.giris select{padding:5px 6px}
+button{font:inherit;cursor:pointer;border:1px solid var(--cizgi);background:var(--kart);color:var(--yazi);border-radius:6px;padding:6px 12px}
+button:hover{border-color:var(--vurgu)}
+button.ana{background:var(--vurgu);border-color:var(--vurgu);color:#fff}
+button.sil{border:none;background:none;color:var(--hata);padding:4px 8px;font-size:18px;line-height:1}
+.dugmeler{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.not{font-size:13px;color:var(--soluk);margin:6px 0 0}
+.kutu{border-radius:8px;padding:10px 12px;margin:10px 0;font-size:14px}
+.kutu.uyari{background:var(--uyari-zemin);color:var(--uyari)}
+.kutu.hata{background:var(--hata-zemin);color:var(--hata)}
+.kutu.bilgi{background:var(--vurgu-acik)}
+.kutu ul{margin:4px 0 0;padding-left:20px}
+.canli{margin-top:10px;font-size:15px}
+.canli b{font-variant-numeric:tabular-nums}
+.yan{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end}
+.yan>div{flex:1 1 180px}
+.onay{display:flex;gap:6px;align-items:center;font-size:14px;color:var(--yazi);margin:0}
+.kucuk{font-size:12.5px;color:var(--soluk)}
+details summary{cursor:pointer;font-weight:600}
+/* UYAP dosya hesabi cizelgesi */
+.belge-ust{display:grid;grid-template-columns:auto 1fr;gap:2px 14px;margin:0 0 12px;font-size:14px}
+.belge-ust dt{color:var(--soluk)}.belge-ust dd{margin:0;font-weight:600}
+.cizelge th{background:var(--baslik);color:var(--yazi)}
+.kapak{max-width:620px}
+.kapak td{padding:6px 8px}
+.kapak td.isaret{width:24px;color:var(--soluk);text-align:center}
+.kapak tr.ara td{font-weight:700;border-top:1.5px solid var(--yazi)}
+.kapak tr.son td{font-size:18px;font-weight:700;color:var(--vurgu);border-top:2px solid var(--vurgu)}
+.kapak tr.sifir td{color:var(--soluk)}
+.kapak .ac{color:var(--soluk);font-size:12.5px;font-weight:400}
+.yazdir-baslik{display:none}
+#veriDurumu{font-size:13.5px}#veriDurumu .kucuk{display:block;margin-top:3px}
+#veriDurumu.uyari{background:var(--uyari-zemin);color:var(--uyari)}
+#indir{white-space:nowrap}
+@media (max-width:640px){h1{font-size:20px}.kapak tr.son td{font-size:16px}}
+@media print{
+  body{background:#fff;color:#000;font-size:11.5px}
+  main{padding:0;max-width:none}
+  .giris-bolum,.dugmeler,.ekran,button.sil,#veriDurumu,.alt{display:none!important}
+  .kart{border:none;padding:0;margin-bottom:10px}
+  .yazdir-baslik{display:block}
+  .tablo-kap{overflow:visible}
+  th,td{padding:3px 4px}
+  .cizelge th{background:#eee}
+}
+</style>
+</head>
+<body>
+<main>
+<header class="ekran">
+  <h1>İcra Dosya Hesabı</h1>
+  <p class="alt">UYAP "Dosya Hesabı" düzeninde: takipte kesinleşen miktar, harç, faiz, vekâlet, masraf, ara ödemeler ve bakiye borç.
+     İnternetsiz de çalışır. Açılışta yalnız güncel oranları okur; girdiğiniz hiçbir bilgi bir yere gönderilmez.
+     <a id="indir" href="index.html" download="Icra Dosya Hesabi.html" hidden>Bilgisayarına indir (internetsiz çalışan tek dosya)</a></p>
+  <div id="veriDurumu" class="kutu bilgi">Güncel oranlar kontrol ediliyor…</div>
+</header>
+<div id="yuklemeHatasi" class="kutu hata" hidden></div>
+
+<section class="kart giris-bolum">
+  <h2>1. Dosya</h2>
+  <div class="izgara">
+    <div><label for="dosyaNo">Dosya no</label><input id="dosyaNo" placeholder="2026/1234"></div>
+    <div><label for="takipTarihi">Takip tarihi</label><input id="takipTarihi" type="date"></div>
+    <div><label for="hesapTarihi">Hesap tarihi</label><input id="hesapTarihi" type="date"></div>
+    <div><label for="gunYil">Faizde yıl</label>
+      <select id="gunYil"><option value="365">365 gün (UYAP böyle)</option><option value="360">360 gün</option></select></div>
+  </div>
+  <div class="yan" style="margin-top:12px">
+    <div style="flex:2 1 320px"><label for="harcSecim">Tahsil harcı oranı</label><select id="harcSecim"></select></div>
+    <div id="harcElleKap" hidden><label for="harcElle">Oran (%)</label><input id="harcElle" inputmode="decimal" placeholder="örn. 2,84"></div>
+  </div>
+  <p class="not" id="harcAciklama"></p>
+</section>
+
+<section class="kart giris-bolum">
+  <h2>2. Takipte kesinleşen miktar</h2>
+  <p class="not">Ödeme emrindeki her satırı ayrı girin. <b>Asıl alacak</b>a takipten sonra faiz işler. İşlemiş ya da akdi faiz,
+     BSMV, ihtarname ve protesto gideri gibi satırlar <b>faiz / ferî</b> türündedir: bunlara faiz işlemez ve ara ödemeler
+     asıl alacaktan önce bunlara sayılır.</p>
+  <div class="tablo-kap"><table class="giris" id="kalemTablo"><thead></thead><tbody></tbody></table></div>
+  <div class="dugmeler">
+    <button data-ekle="asil">+ Asıl alacak</button>
+    <button data-ekle="islemis">+ İşlemiş faiz</button>
+    <button data-ekle="akdi">+ Akdi faiz</button>
+    <button data-ekle="bsmvKalem">+ BSMV</button>
+    <button data-ekle="ihtar">+ İhtarname / protesto gideri</button>
+    <button data-ekle="cek">+ Çek tazminatı (%10)</button>
+    <button data-ekle="komisyon">+ Komisyon (binde 3)</button>
+  </div>
+  <p class="not"><label class="onay"><input type="checkbox" id="oncekiAcik"> Takipten önceki faizi de program hesaplasın
+     (ödeme emrinde işlemiş faiz yazmıyorsa)</label></p>
+  <div class="canli">Takipte kesinleşen miktar: <b id="tkmCanli">—</b></div>
+</section>
+
+<section class="kart giris-bolum">
+  <h2>3. Harç, vekâlet, masraf, vergiler</h2>
+  <div class="yan">
+    <div><label for="basvurma">Başvurma harcı (₺)</label><input id="basvurma" inputmode="decimal" placeholder="0,00"></div>
+    <div style="flex:0 0 auto"><button data-ekle="basvurmaYil" id="basvurmaDugme">Takip yılının tutarı</button></div>
+    <div><label for="vekaletMod">Vekâlet ücreti</label>
+      <select id="vekaletMod"><option value="otomatik">Tarifeye göre hesaplansın</option><option value="elle">Elle gireceğim</option><option value="yok">Yok (vekilsiz takip)</option></select></div>
+    <div id="vekaletElleKap" hidden><label for="vekaletTutar">Vekâlet ücreti (₺)</label><input id="vekaletTutar" inputmode="decimal"></div>
+    <div><label class="onay"><input type="checkbox" id="suresinde"> Borçlu ödeme süresinde ödedi (¾)</label></div>
+  </div>
+  <h3>Masraf</h3>
+  <div class="tablo-kap"><table class="giris" id="masrafTablo">
+    <thead><tr><th>Tarih</th><th>Açıklama</th><th>Tutar (₺)</th><th></th></tr></thead><tbody></tbody></table></div>
+  <div class="dugmeler">
+    <button data-ekle="masraf">+ Masraf</button>
+    <button data-ekle="suret">+ Vekâletname suret harcı</button>
+    <button data-ekle="tebligat">+ Tebligat gideri</button>
+    <button data-ekle="haciz">+ Daire dışı haciz harcı</button>
+  </div>
+  <p class="not">UYAP'taki masraf toplamını tek satır olarak da yazabilirsiniz. Peşin harcı masrafa <b>yazmayın</b>: tahsil harcı tam
+     hesaplanır, peşin harç onun içinden mahsup edilir (Harçlar K. md. 29). <span id="maktuNotu"></span></p>
+  <h3>Takipten sonraki faize vergiler (takip talebinde istenmişse)</h3>
+  <div class="izgara">
+    <div><label for="v_bsmv">B.S.M.V (%)</label><input id="v_bsmv" data-alan="v.bsmv" inputmode="decimal" placeholder="0"></div>
+    <div><label for="v_kkdf">K.K.D.F (%)</label><input id="v_kkdf" data-alan="v.kkdf" inputmode="decimal" placeholder="0"></div>
+    <div><label for="v_kdv">K.D.V (%)</label><input id="v_kdv" data-alan="v.kdv" inputmode="decimal" placeholder="0"></div>
+    <div><label for="v_oiv">Özel İletişim Vergisi (%)</label><input id="v_oiv" data-alan="v.oiv" inputmode="decimal" placeholder="0"></div>
+  </div>
+</section>
+
+<section class="kart giris-bolum">
+  <h2>4. Yatan para (ara ödemeler)</h2>
+  <p class="not">Ara ödeme asıl alacaktan değil, önce masraftan, sonra faizden düşer; artarsa asıl alacağa geçer
+     (İİK 59, TBK 100). Asıl alacak azalınca faizi de azalır, bu yüzden tarih önemli.</p>
+  <div class="tablo-kap"><table class="giris" id="tahsilatTablo">
+    <thead><tr><th>Tarih</th><th>Tutar (₺)</th><th>Harç oranı</th><th></th></tr></thead><tbody></tbody></table></div>
+  <div class="dugmeler"><button data-ekle="tahsilat">+ Ödeme</button></div>
+</section>
+
+<section class="kart giris-bolum">
+  <details>
+    <summary>5. Faiz oranı tabloları (gerekirse düzeltin)</summary>
+    <p class="not">Tablolar Merkez Bankası'nın reeskont ve avans oranlarından kanundaki kurala göre <b>hesaplanır</b>.
+      Yasal faiz (3095 s.K. md. 1): 31.07.2026'dan beri önceki yılın 31 Aralık reeskont oranının %80'i. Ticari faiz (md. 2):
+      önceki yılın 31 Aralık avans oranı. İkisinde de 30 Haziran'daki oran 5 puan veya daha fazla farklıysa yılın ikinci yarısında
+      o oran geçer. Her satır "bu tarihten itibaren bu oran" demektir. Bir hücreyi değiştirirseniz güncel oranlar yerine sizin
+      tablonuz kullanılır.</p>
+    <div id="oranDurumu" class="kutu uyari" hidden></div>
+    <div class="yan">
+      <div><h3>Yasal faiz</h3><table class="giris" id="yasalTablo"><thead><tr><th>Başlangıç</th><th>Oran %</th><th></th></tr></thead><tbody></tbody></table>
+        <div class="dugmeler"><button data-oran-ekle="yasal">+ Satır</button></div></div>
+      <div><h3>Ticari (avans) faiz</h3><table class="giris" id="ticariTablo"><thead><tr><th>Başlangıç</th><th>Oran %</th><th></th></tr></thead><tbody></tbody></table>
+        <div class="dugmeler"><button data-oran-ekle="ticari">+ Satır</button></div></div>
+    </div>
+    <div class="dugmeler"><button id="oranSifirla">Güncel oranlara dön</button></div>
+  </details>
+</section>
+
+<div class="dugmeler giris-bolum" style="margin-bottom:16px">
+  <button class="ana" onclick="window.print()">Yazdır</button>
+  <button id="kaydet">Dosyayı kaydet</button>
+  <button id="acDugme">Kayıtlı dosyayı aç</button><input type="file" id="acGiris" accept=".json,application/json" hidden>
+  <button id="ornek">Örnek dosya yükle</button>
+  <button id="temizle">Hepsini temizle</button>
+</div>
+
+<section class="kart" id="sonuc" aria-live="polite"></section>
+</main>
+
+<script src="veri.js"></script>
+<script src="oranlar.js"></script>
+<script src="hesap.js"></script>
+<script src="arayuz.js"></script>
+</body>
+</html>

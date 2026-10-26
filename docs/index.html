@@ -1,0 +1,1264 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>İcra Dosya Hesabı</title>
+<style>
+:root{--zemin:#f4f5f7;--kart:#fff;--yazi:#1d2430;--soluk:#5b6576;--cizgi:#d9dde4;--vurgu:#1f5fbf;--vurgu-acik:#e8f0fc;
+--uyari:#8a5a00;--uyari-zemin:#fff6e0;--hata:#a3262a;--hata-zemin:#fdeceb;--giris:#fff;--baslik:#e9ecf1}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--zemin:#15181d;--kart:#1e232a;--yazi:#e6e9ee;--soluk:#a1aab8;
+--cizgi:#343b46;--vurgu:#7fb0ff;--vurgu-acik:#1f2d44;--uyari:#f0c060;--uyari-zemin:#3a2f12;--hata:#ff8a85;--hata-zemin:#3d1c1c;--giris:#171b21;--baslik:#2a313b}}
+:root[data-theme="dark"]{--zemin:#15181d;--kart:#1e232a;--yazi:#e6e9ee;--soluk:#a1aab8;--cizgi:#343b46;--vurgu:#7fb0ff;--vurgu-acik:#1f2d44;
+--uyari:#f0c060;--uyari-zemin:#3a2f12;--hata:#ff8a85;--hata-zemin:#3d1c1c;--giris:#171b21;--baslik:#2a313b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--zemin);color:var(--yazi);font:15px/1.45 "Segoe UI",system-ui,-apple-system,Arial,sans-serif}
+main{max-width:1180px;margin:0 auto;padding:20px 16px 60px}
+h1{font-size:24px;margin:0 0 4px}
+h2{font-size:17px;margin:0 0 12px}
+h3{font-size:15px;margin:18px 0 8px}
+.alt{color:var(--soluk);margin:0 0 18px;font-size:14px}
+.kart{background:var(--kart);border:1px solid var(--cizgi);border-radius:10px;padding:16px;margin-bottom:16px}
+.izgara{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+label{display:block;font-size:13px;color:var(--soluk);margin-bottom:3px}
+input,select{font:inherit;color:var(--yazi);background:var(--giris);border:1px solid var(--cizgi);border-radius:6px;padding:6px 8px;width:100%;min-width:0}
+input:focus,select:focus{outline:2px solid var(--vurgu);outline-offset:-1px}
+input:disabled,select:disabled{opacity:.45}
+input[type=checkbox]{width:auto}
+.tablo-kap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%}
+th,td{padding:6px;border-bottom:1px solid var(--cizgi);text-align:left;vertical-align:top}
+th{font-size:12.5px;color:var(--soluk);font-weight:600;white-space:nowrap}
+td.s,th.s{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.giris td{padding:4px}
+.giris input,.giris select{padding:5px 6px}
+button{font:inherit;cursor:pointer;border:1px solid var(--cizgi);background:var(--kart);color:var(--yazi);border-radius:6px;padding:6px 12px}
+button:hover{border-color:var(--vurgu)}
+button.ana{background:var(--vurgu);border-color:var(--vurgu);color:#fff}
+button.sil{border:none;background:none;color:var(--hata);padding:4px 8px;font-size:18px;line-height:1}
+.dugmeler{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.not{font-size:13px;color:var(--soluk);margin:6px 0 0}
+.kutu{border-radius:8px;padding:10px 12px;margin:10px 0;font-size:14px}
+.kutu.uyari{background:var(--uyari-zemin);color:var(--uyari)}
+.kutu.hata{background:var(--hata-zemin);color:var(--hata)}
+.kutu.bilgi{background:var(--vurgu-acik)}
+.kutu ul{margin:4px 0 0;padding-left:20px}
+.canli{margin-top:10px;font-size:15px}
+.canli b{font-variant-numeric:tabular-nums}
+.yan{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end}
+.yan>div{flex:1 1 180px}
+.onay{display:flex;gap:6px;align-items:center;font-size:14px;color:var(--yazi);margin:0}
+.kucuk{font-size:12.5px;color:var(--soluk)}
+details summary{cursor:pointer;font-weight:600}
+/* UYAP dosya hesabi cizelgesi */
+.belge-ust{display:grid;grid-template-columns:auto 1fr;gap:2px 14px;margin:0 0 12px;font-size:14px}
+.belge-ust dt{color:var(--soluk)}.belge-ust dd{margin:0;font-weight:600}
+.cizelge th{background:var(--baslik);color:var(--yazi)}
+.kapak{max-width:620px}
+.kapak td{padding:6px 8px}
+.kapak td.isaret{width:24px;color:var(--soluk);text-align:center}
+.kapak tr.ara td{font-weight:700;border-top:1.5px solid var(--yazi)}
+.kapak tr.son td{font-size:18px;font-weight:700;color:var(--vurgu);border-top:2px solid var(--vurgu)}
+.kapak tr.sifir td{color:var(--soluk)}
+.kapak .ac{color:var(--soluk);font-size:12.5px;font-weight:400}
+.yazdir-baslik{display:none}
+#veriDurumu{font-size:13.5px}#veriDurumu .kucuk{display:block;margin-top:3px}
+#veriDurumu.uyari{background:var(--uyari-zemin);color:var(--uyari)}
+#indir{white-space:nowrap}
+@media (max-width:640px){h1{font-size:20px}.kapak tr.son td{font-size:16px}}
+@media print{
+  body{background:#fff;color:#000;font-size:11.5px}
+  main{padding:0;max-width:none}
+  .giris-bolum,.dugmeler,.ekran,button.sil,#veriDurumu,.alt{display:none!important}
+  .kart{border:none;padding:0;margin-bottom:10px}
+  .yazdir-baslik{display:block}
+  .tablo-kap{overflow:visible}
+  th,td{padding:3px 4px}
+  .cizelge th{background:#eee}
+}
+</style>
+</head>
+<body>
+<main>
+<header class="ekran">
+  <h1>İcra Dosya Hesabı</h1>
+  <p class="alt">UYAP "Dosya Hesabı" düzeninde: takipte kesinleşen miktar, harç, faiz, vekâlet, masraf, ara ödemeler ve bakiye borç.
+     İnternetsiz de çalışır. Açılışta yalnız güncel oranları okur; girdiğiniz hiçbir bilgi bir yere gönderilmez.
+     <a id="indir" href="index.html" download="Icra Dosya Hesabi.html" hidden>Bilgisayarına indir (internetsiz çalışan tek dosya)</a></p>
+  <div id="veriDurumu" class="kutu bilgi">Güncel oranlar kontrol ediliyor…</div>
+</header>
+<div id="yuklemeHatasi" class="kutu hata" hidden></div>
+
+<section class="kart giris-bolum">
+  <h2>1. Dosya</h2>
+  <div class="izgara">
+    <div><label for="dosyaNo">Dosya no</label><input id="dosyaNo" placeholder="2026/1234"></div>
+    <div><label for="takipTarihi">Takip tarihi</label><input id="takipTarihi" type="date"></div>
+    <div><label for="hesapTarihi">Hesap tarihi</label><input id="hesapTarihi" type="date"></div>
+    <div><label for="gunYil">Faizde yıl</label>
+      <select id="gunYil"><option value="365">365 gün (UYAP böyle)</option><option value="360">360 gün</option></select></div>
+  </div>
+  <div class="yan" style="margin-top:12px">
+    <div style="flex:2 1 320px"><label for="harcSecim">Tahsil harcı oranı</label><select id="harcSecim"></select></div>
+    <div id="harcElleKap" hidden><label for="harcElle">Oran (%)</label><input id="harcElle" inputmode="decimal" placeholder="örn. 2,84"></div>
+  </div>
+  <p class="not" id="harcAciklama"></p>
+</section>
+
+<section class="kart giris-bolum">
+  <h2>2. Takipte kesinleşen miktar</h2>
+  <p class="not">Ödeme emrindeki her satırı ayrı girin. <b>Asıl alacak</b>a takipten sonra faiz işler. İşlemiş ya da akdi faiz,
+     BSMV, ihtarname ve protesto gideri gibi satırlar <b>faiz / ferî</b> türündedir: bunlara faiz işlemez ve ara ödemeler
+     asıl alacaktan önce bunlara sayılır.</p>
+  <div class="tablo-kap"><table class="giris" id="kalemTablo"><thead></thead><tbody></tbody></table></div>
+  <div class="dugmeler">
+    <button data-ekle="asil">+ Asıl alacak</button>
+    <button data-ekle="islemis">+ İşlemiş faiz</button>
+    <button data-ekle="akdi">+ Akdi faiz</button>
+    <button data-ekle="bsmvKalem">+ BSMV</button>
+    <button data-ekle="ihtar">+ İhtarname / protesto gideri</button>
+    <button data-ekle="cek">+ Çek tazminatı (%10)</button>
+    <button data-ekle="komisyon">+ Komisyon (binde 3)</button>
+  </div>
+  <p class="not"><label class="onay"><input type="checkbox" id="oncekiAcik"> Takipten önceki faizi de program hesaplasın
+     (ödeme emrinde işlemiş faiz yazmıyorsa)</label></p>
+  <div class="canli">Takipte kesinleşen miktar: <b id="tkmCanli">—</b></div>
+</section>
+
+<section class="kart giris-bolum">
+  <h2>3. Harç, vekâlet, masraf, vergiler</h2>
+  <div class="yan">
+    <div><label for="basvurma">Başvurma harcı (₺)</label><input id="basvurma" inputmode="decimal" placeholder="0,00"></div>
+    <div style="flex:0 0 auto"><button data-ekle="basvurmaYil" id="basvurmaDugme">Takip yılının tutarı</button></div>
+    <div><label for="vekaletMod">Vekâlet ücreti</label>
+      <select id="vekaletMod"><option value="otomatik">Tarifeye göre hesaplansın</option><option value="elle">Elle gireceğim</option><option value="yok">Yok (vekilsiz takip)</option></select></div>
+    <div id="vekaletElleKap" hidden><label for="vekaletTutar">Vekâlet ücreti (₺)</label><input id="vekaletTutar" inputmode="decimal"></div>
+    <div><label class="onay"><input type="checkbox" id="suresinde"> Borçlu ödeme süresinde ödedi (¾)</label></div>
+  </div>
+  <h3>Masraf</h3>
+  <div class="tablo-kap"><table class="giris" id="masrafTablo">
+    <thead><tr><th>Tarih</th><th>Açıklama</th><th>Tutar (₺)</th><th></th></tr></thead><tbody></tbody></table></div>
+  <div class="dugmeler">
+    <button data-ekle="masraf">+ Masraf</button>
+    <button data-ekle="suret">+ Vekâletname suret harcı</button>
+    <button data-ekle="tebligat">+ Tebligat gideri</button>
+    <button data-ekle="haciz">+ Daire dışı haciz harcı</button>
+  </div>
+  <p class="not">UYAP'taki masraf toplamını tek satır olarak da yazabilirsiniz. Peşin harcı masrafa <b>yazmayın</b>: tahsil harcı tam
+     hesaplanır, peşin harç onun içinden mahsup edilir (Harçlar K. md. 29). <span id="maktuNotu"></span></p>
+  <h3>Takipten sonraki faize vergiler (takip talebinde istenmişse)</h3>
+  <div class="izgara">
+    <div><label for="v_bsmv">B.S.M.V (%)</label><input id="v_bsmv" data-alan="v.bsmv" inputmode="decimal" placeholder="0"></div>
+    <div><label for="v_kkdf">K.K.D.F (%)</label><input id="v_kkdf" data-alan="v.kkdf" inputmode="decimal" placeholder="0"></div>
+    <div><label for="v_kdv">K.D.V (%)</label><input id="v_kdv" data-alan="v.kdv" inputmode="decimal" placeholder="0"></div>
+    <div><label for="v_oiv">Özel İletişim Vergisi (%)</label><input id="v_oiv" data-alan="v.oiv" inputmode="decimal" placeholder="0"></div>
+  </div>
+</section>
+
+<section class="kart giris-bolum">
+  <h2>4. Yatan para (ara ödemeler)</h2>
+  <p class="not">Ara ödeme asıl alacaktan değil, önce masraftan, sonra faizden düşer; artarsa asıl alacağa geçer
+     (İİK 59, TBK 100). Asıl alacak azalınca faizi de azalır, bu yüzden tarih önemli.</p>
+  <div class="tablo-kap"><table class="giris" id="tahsilatTablo">
+    <thead><tr><th>Tarih</th><th>Tutar (₺)</th><th>Harç oranı</th><th></th></tr></thead><tbody></tbody></table></div>
+  <div class="dugmeler"><button data-ekle="tahsilat">+ Ödeme</button></div>
+</section>
+
+<section class="kart giris-bolum">
+  <details>
+    <summary>5. Faiz oranı tabloları (gerekirse düzeltin)</summary>
+    <p class="not">Tablolar Merkez Bankası'nın reeskont ve avans oranlarından kanundaki kurala göre <b>hesaplanır</b>.
+      Yasal faiz (3095 s.K. md. 1): 31.07.2026'dan beri önceki yılın 31 Aralık reeskont oranının %80'i. Ticari faiz (md. 2):
+      önceki yılın 31 Aralık avans oranı. İkisinde de 30 Haziran'daki oran 5 puan veya daha fazla farklıysa yılın ikinci yarısında
+      o oran geçer. Her satır "bu tarihten itibaren bu oran" demektir. Bir hücreyi değiştirirseniz güncel oranlar yerine sizin
+      tablonuz kullanılır.</p>
+    <div id="oranDurumu" class="kutu uyari" hidden></div>
+    <div class="yan">
+      <div><h3>Yasal faiz</h3><table class="giris" id="yasalTablo"><thead><tr><th>Başlangıç</th><th>Oran %</th><th></th></tr></thead><tbody></tbody></table>
+        <div class="dugmeler"><button data-oran-ekle="yasal">+ Satır</button></div></div>
+      <div><h3>Ticari (avans) faiz</h3><table class="giris" id="ticariTablo"><thead><tr><th>Başlangıç</th><th>Oran %</th><th></th></tr></thead><tbody></tbody></table>
+        <div class="dugmeler"><button data-oran-ekle="ticari">+ Satır</button></div></div>
+    </div>
+    <div class="dugmeler"><button id="oranSifirla">Güncel oranlara dön</button></div>
+  </details>
+</section>
+
+<div class="dugmeler giris-bolum" style="margin-bottom:16px">
+  <button class="ana" onclick="window.print()">Yazdır</button>
+  <button id="kaydet">Dosyayı kaydet</button>
+  <button id="acDugme">Kayıtlı dosyayı aç</button><input type="file" id="acGiris" accept=".json,application/json" hidden>
+  <button id="ornek">Örnek dosya yükle</button>
+  <button id="temizle">Hepsini temizle</button>
+</div>
+
+<section class="kart" id="sonuc" aria-live="polite"></section>
+</main>
+
+<script>/* veri.js */
+/* site_yap.js uretti - elle duzenleme; kaynak veri/oranlar.json */
+window.ICRA_GOMULU = {"surum":1,"aciklama":"Icra Dosya Hesabi verisi. tcmb ve harc'i robot (veri_cek.py) her gun resmi kaynaktan tazeler; vekalet elle tutulur.","kontrol":"2026-10-26","tcmb":{"kaynak":"https://www.tcmb.gov.tr/wps/wcm/connect/TR/TCMB+TR/Main+Menu/Temel+Faaliyetler/Para+Politikasi/Reeskont+ve+Avans+Faiz+Oranlari","sutunlar":["yururluk","reeskont","avans"],"satirlar":[["1990-01-01",40,45],["1990-09-20",43,48.25],["1990-11-23",45,50.75],["1991-02-15",48,54.5],["1994-01-27",56,65],["1994-04-21",79,98],["1994-07-12",70,85],["1994-07-27",63,75],["1994-10-01",55,64],["1995-06-10",52,60],["1995-08-01",50,57],["1997-08-02",67,80],["1999-12-30",60,70],["2002-05-17",55,64],["2003-06-14",50,57],["2003-10-08",43,48],["2004-06-15",38,42],["2005-01-13",32,35],["2005-05-25",28,30],["2005-12-20",23,25],["2006-12-20",27,29],["2007-12-28",25,27],["2009-04-09",19,20],["2009-06-12",18,19],["2009-12-22",15,16],["2010-12-30",14,15],["2011-12-29",17,17.75],["2012-06-19",16,16.5],["2012-12-20",13.5,13.75],["2013-06-21",9.5,11],["2013-12-27",10.25,11.75],["2014-12-14",9,10.5],["2016-12-31",8.75,9.75],["2018-06-29",18.5,19.5],["2019-10-11",17.25,18.25],["2019-12-21",12.75,13.75],["2020-06-13",9,10],["2020-12-19",15.75,16.75],["2021-12-31",14.75,15.75],["2022-12-31",9.75,10.75],["2023-06-24",15.75,16.75],["2023-09-01",25.75,26.75],["2023-09-28",30.75,31.75],["2023-11-01",35.75,36.75],["2023-12-01",40.75,41.75],["2023-12-23",43.25,44.25],["2024-04-01",50.75,51.75],["2024-12-28",48.25,49.25],["2025-03-08",43.25,44.25],["2025-09-17",41.25,42.25],["2025-12-20",38.75,39.75]]},"harc":{"kaynak":"https://www.mevzuat.gov.tr/mevzuatmetin/1.5.492.pdf","yillar":{"2026":{"basvurma":732,"vekaletSuret":104,"hacizDisari":1718.8}},"tahsilOranlari":{"a":4.55,"b":9.1,"c":11.38,"d":4.55,"e":2.27}},"vekalet":[{"ad":"2025-2026 AAÜT","yururluk":"2025-11-04","kaynak":"Resmî Gazete 04.11.2025, sayı 33067, md. 11 ve üçüncü kısım","maktu":9000,"esik":56250,"dilimler":[[600000,16],[600000,15],[1200000,14],[1200000,13],[1800000,11],[2400000,8],[3000000,5],[3600000,3],[4200000,2],[null,1]]}]};
+
+</script>
+<script>/* oranlar.js */
+/* Oranlar ve kurallar. VERI (TCMB oran tablosu, maktu harclar, avukatlik ucret tarifesi)
+   veri/oranlar.json'da durur; robot (veri_cek.py) her gun resmi kaynaktan tazeler. Bu dosya:
+     - o veriden yasal ve ticari faiz tablolarini kanundaki kurala gore TURETIR,
+     - internetten gelen veriyi kabul etmeden once DENETLER (veriDenetle),
+     - degismeyen kurallari (tahsil harci oranlari, cezaevi harci) tutar.
+   Tarayicida veri `window.ICRA_GOMULU`dan (site_yap.js sayfaya gomer), node'da dosyadan okunur. */
+(function (kok) {
+  "use strict";
+  var dugum = typeof module !== "undefined" && module.exports;
+  var GOMULU = dugum
+    ? JSON.parse(require("fs").readFileSync(require("path").join(__dirname, "veri", "oranlar.json"), "utf8"))
+    : kok.ICRA_GOMULU;
+
+  /* Tahsil harci oranlari - 492 s. Harclar K. (1) sayili tarife B/I-3 ("uygulanan miktar").
+     Robot her gun a-e bentlerini metinden okuyup bu degerlerle kiyaslar; degisirse DURUR.
+     Liste Ertugrul'un getirdigi elle yazilmis oran listesiyle (26.10.2026) birebir ayni dokuz
+     oran + %2,27 + %0. 2,84 ve 0,56'nin dayanagi DOGRULANMADI, ekranda da oyle yaziyor. */
+  var TAHSIL_HARCI_LISTESI = [
+    { oran: 4.55,   kisa: "%4,55 — hacizden önce · maaş haczi",
+      aciklama: "Ödeme emri tebliğinden sonra, hacizden önce ödenen para; maaş haczi; icra eliyle tahliye ve teslim (tarife B-I-3 a, d, f-bb, g-bb)." },
+    { oran: 9.10,   kisa: "%9,10 — hacizden sonra, satıştan önce",
+      aciklama: "Hacizden sonra ve satıştan önce ödenen para (tarife B-I-3 b)." },
+    { oran: 11.38,  kisa: "%11,38 — satış yoluyla",
+      aciklama: "Haczedilen ya da rehinli malın satışıyla tahsil edilen para (tarife B-I-3 c)." },
+    { oran: 2.27,   kisa: "%2,27 — icra emri üzerine tahliye / teslim",
+      aciklama: "İcra emri tebliği üzerine tahliye ya da menkul teslimi; İİK 125/3 gereği ödeme (tarife B-I-3 e, f-aa, g-aa)." },
+    { oran: 2.275,  kisa: "%2,275 — 4,55'in yarısı · 9,10'un dörtte biri",
+      aciklama: "4,55'in yarısı: hacizden önce takipten vazgeçme (Harçlar K. md. 23), icra eliyle taşınmaz tahliyesi (md. 24). 9,10'un dörtte biri: konut finansmanı / TOKİ alacağında hacizden sonra (tarife h)." },
+    { oran: 1.135,  kisa: "%1,135 — 2,27'nin yarısı",
+      aciklama: "İcra emri üzerine taşınmaz tahliyesi: tarifedeki oranın yarısı (Harçlar K. md. 24)." },
+    { oran: 1.1375, kisa: "%1,1375 — 4,55'in dörtte biri",
+      aciklama: "Konut finansmanı ve TOKİ rehinli alacaklarında hacizden önce / maaş haczi (tarife h: dörtte biri)." },
+    { oran: 2.845,  kisa: "%2,845 — 11,38'in dörtte biri",
+      aciklama: "Konut finansmanı ve TOKİ rehinli alacaklarında satış yoluyla (tarife h)." },
+    { oran: 2.84,   kisa: "%2,84",
+      aciklama: "Elle yazılmış oran listesinde var; dayanağı doğrulanmadı (11,38'in dörtte biri 2,845'tir)." },
+    { oran: 0.56,   kisa: "%0,56",
+      aciklama: "Elle yazılmış oran listesinde var; dayanağı doğrulanmadı (2,27'nin dörtte biri 0,5675'tir)." },
+    { oran: 0,      kisa: "%0 — ödeme emri tebliğinden önce",
+      aciklama: "Ödeme emri tebliğinden önce ödenen paradan tahsil harcı alınmaz." }
+  ];
+  var CEZAEVI_YUZDE = 2;                 // 2548 s.K. md. 1: borcluya YUKLETILEMEZ
+
+  function oranAt(satirlar, t, sutun) {  // t gunu yururlukteki oran; sutun 1 reeskont, 2 avans
+    var o = null;
+    for (var i = 0; i < satirlar.length; i++) if (satirlar[i][0] <= t) o = satirlar[i][sutun];
+    return o;
+  }
+  function yuvarla4(x) { return Math.round(x * 10000) / 10000; }
+  function ekleyici(liste) {
+    return function (bas, oran) {
+      if (oran === null || oran === undefined) return;
+      if (liste.length && liste[liste.length - 1].oran === oran) return;   // ayni oran: donem uzar
+      liste.push({ bas: bas, oran: oran });
+    };
+  }
+  function besPuan(a, b) { return Math.abs(a - b) >= 5 - 1e-9; }      // "bes puan veya daha cok"
+
+  /* Ticari temerrut faizi - 3095 md. 2/2 (4489 s.K. ile 1.1.2000'den beri ayni metin): yil boyu
+     onceki yilin 31 Aralik AVANS orani; 30 Haziran'daki avans orani ondan bes puan veya daha cok
+     farkliysa yilin ikinci yarisinda (1 Temmuz'dan) o oran. Merkez Bankasi'nin her oran
+     degisikligi ticari faizi DEGISTIRMEZ. */
+  function ticariDonemler(ilkYil, sonYil, satirlar) {
+    var liste = [], ekle = ekleyici(liste);
+    for (var y = ilkYil; y <= sonYil; y++) {
+      var aralik = oranAt(satirlar, (y - 1) + "-12-31", 2), haziran = oranAt(satirlar, y + "-06-30", 2);
+      ekle(y + "-01-01", aralik);
+      if (aralik !== null && haziran !== null && besPuan(haziran, aralik)) ekle(y + "-07-01", haziran);
+    }
+    return liste;
+  }
+
+  /* Yasal faiz - 3095 md. 1. Gecmis sabit: 01.01.2006 %9, 01.06.2024 %24.
+     31.07.2026'dan beri (7589 s.K. md. 10): onceki yilin 31 Aralik REESKONT oraninin %80'i;
+     30 Haziran'daki reeskont ondan bes puan veya daha cok farkliysa yilin ikinci yarisinda
+     30 Haziran oraninin %80'i. Kural 2026'nin ikinci yarisinda yururluge girdigi icin o gun
+     ikinci yari kurali gecerli. */
+  var YASAL_GECMIS = [{ bas: "2006-01-01", oran: 9 }, { bas: "2024-06-01", oran: 24 }];
+  var YASAL_KURAL = "2026-07-31";
+  function yasalDonemler(sonYil, satirlar) {
+    var liste = YASAL_GECMIS.map(function (d) { return { bas: d.bas, oran: d.oran }; }), ekle = ekleyici(liste);
+    function yil(y) {
+      var aralik = oranAt(satirlar, (y - 1) + "-12-31", 1), haziran = oranAt(satirlar, y + "-06-30", 1);
+      return { ilk: aralik === null ? null : yuvarla4(aralik * 0.8),
+               ikinci: aralik !== null && haziran !== null && besPuan(haziran, aralik) ? yuvarla4(haziran * 0.8) : null };
+    }
+    var k = yil(2026);
+    ekle(YASAL_KURAL, k.ikinci !== null ? k.ikinci : k.ilk);
+    for (var y = 2027; y <= sonYil; y++) {
+      k = yil(y);
+      ekle(y + "-01-01", k.ilk);
+      if (k.ikinci !== null) ekle(y + "-07-01", k.ikinci);
+    }
+    return liste;
+  }
+
+  /* Veri hangi gune kadar KESIN? Bir yilin ilk yarisinin orani onceki 31 Aralik'ta, ikinci
+     yarisininki 30 Haziran'da belli olur. Veri o gun ya da sonra alinmissa o yarim yil kesin. */
+  function kesinSon(kontrol) {
+    var y = +kontrol.slice(0, 4);
+    if (kontrol >= y + "-12-31") return (y + 1) + "-06-30";
+    if (kontrol >= y + "-06-30") return y + "-12-31";
+    return y + "-06-30";
+  }
+  function faizTablolari(veri) {
+    var son = +kesinSon(veri.kontrol).slice(0, 4), s = veri.tcmb.satirlar;
+    return { yasal: yasalDonemler(son, s), ticari: ticariDonemler(2000, son, s), kesinSon: kesinSon(veri.kontrol) };
+  }
+
+  function vekaletTarifeleri(veri) {
+    return (veri.vekalet || []).map(function (t) {
+      return { ad: t.ad, yururluk: t.yururluk, kaynak: t.kaynak, maktu: t.maktu, esik: t.esik,
+               dilimler: t.dilimler.map(function (d) { return [d[0] === null ? Infinity : d[0], d[1]]; }) };
+    }).sort(function (a, b) { return a.yururluk < b.yururluk ? -1 : 1; });
+  }
+  function maktuHarc(veri, yil) { return (veri.harc && veri.harc.yillar && veri.harc.yillar[String(yil)]) || null; }
+
+  /* Internetten gelen veri bununla kabul ya da ret edilir. Bos liste = temiz. `taban` (gomulu
+     veri) verilirse onun her TCMB satiri gelende de olmali: kirpilmis sayfa ya da eski kopya
+     sessizce kabul edilmesin. Ayni kurallarin Python'u veri_cek.py denetle()'de. */
+  var CAPALAR = [["1990-01-01", 40, 45], ["2016-12-31", 8.75, 9.75], ["2024-04-01", 50.75, 51.75],
+                 ["2025-12-20", 38.75, 39.75]];
+  function tarihMi(t) { return typeof t === "string" && /^\d{4}-\d{2}-\d{2}$/.test(t); }
+  function veriDenetle(veri, taban) {
+    var s = [];
+    if (!veri || typeof veri !== "object") return ["veri bir nesne değil"];
+    if (veri.surum !== 1) s.push("sürüm " + veri.surum + " (beklenen 1)");
+    if (!tarihMi(veri.kontrol)) s.push("kontrol tarihi bozuk");
+    var r = veri.tcmb && veri.tcmb.satirlar;
+    if (!Array.isArray(r) || r.length < 40) s.push("Merkez Bankası tablosu eksik");
+    else {
+      for (var i = 0; i < r.length; i++) {
+        var x = r[i];
+        if (!Array.isArray(x) || !tarihMi(x[0]) || !(x[1] > 0 && x[1] < 200) || !(x[2] > 0 && x[2] < 200)) { s.push("bozuk satır: " + JSON.stringify(x)); break; }
+        if (i && r[i - 1][0] >= x[0]) { s.push("tarihler sıralı değil: " + x[0]); break; }
+      }
+      CAPALAR.forEach(function (c) {
+        if (!r.some(function (x) { return x && x[0] === c[0] && x[1] === c[1] && x[2] === c[2]; })) s.push("tarihsel satır eksik: " + c[0]);
+      });
+      if (taban && taban.tcmb) {
+        var kayip = taban.tcmb.satirlar.filter(function (t) {
+          return !r.some(function (x) { return x && x[0] === t[0] && x[1] === t[1] && x[2] === t[2]; });
+        });
+        if (kayip.length) s.push("dosyadaki " + kayip.length + " satır gelen veride yok (ilk: " + kayip[0][0] + ")");
+      }
+    }
+    var h = veri.harc && veri.harc.yillar;
+    if (!h || typeof h !== "object" || !Object.keys(h).length) s.push("harç tutarları yok");
+    else Object.keys(h).forEach(function (y) {
+      if (!/^\d{4}$/.test(y) || !h[y]) { s.push("harç yılı bozuk: " + y); return; }
+      ["basvurma", "vekaletSuret", "hacizDisari"].forEach(function (k) {
+        if (!(h[y][k] > 0 && h[y][k] < 100000)) s.push("harç " + y + " " + k + " bozuk");
+      });
+    });
+    var v = veri.vekalet;
+    if (!Array.isArray(v) || !v.length) s.push("vekâlet tarifesi yok");
+    else v.forEach(function (t) {
+      var ok = t && typeof t.ad === "string" && tarihMi(t.yururluk) && t.maktu > 0 && t.esik > 0 &&
+               Array.isArray(t.dilimler) && t.dilimler.length > 0 &&
+               t.dilimler.every(function (d, i) {
+                 return Array.isArray(d) && d[1] > 0 && d[1] < 100 && (i < t.dilimler.length - 1 ? d[0] > 0 : d[0] === null);
+               });
+      if (!ok) s.push("vekâlet tarifesi bozuk: " + (t && t.ad));
+    });
+    return s;
+  }
+  /* a, b'den yeni mi: once kontrol tarihi, sonra TCMB satir sayisi, sonra harc yili sayisi. */
+  function yeniMi(a, b) {
+    var ka = [a.kontrol, a.tcmb.satirlar.length, Object.keys(a.harc.yillar).length, a.vekalet.length];
+    var kb = [b.kontrol, b.tcmb.satirlar.length, Object.keys(b.harc.yillar).length, b.vekalet.length];
+    for (var i = 0; i < ka.length; i++) if (ka[i] !== kb[i]) return ka[i] > kb[i] ? 1 : -1;
+    return 0;
+  }
+
+  var api = { GOMULU: GOMULU, TAHSIL_HARCI_LISTESI: TAHSIL_HARCI_LISTESI, CEZAEVI_YUZDE: CEZAEVI_YUZDE,
+              CAPALAR: CAPALAR, kesinSon: kesinSon, faizTablolari: faizTablolari,
+              vekaletTarifeleri: vekaletTarifeleri, maktuHarc: maktuHarc, veriDenetle: veriDenetle, yeniMi: yeniMi,
+              ticariDonemler: function (ilk, son, satirlar) { return ticariDonemler(ilk, son, satirlar || GOMULU.tcmb.satirlar); },
+              yasalDonemler: function (son, satirlar) { return yasalDonemler(son, satirlar || GOMULU.tcmb.satirlar); } };
+  if (GOMULU) {
+    // Testler 2026'ya sabit: gelecekte veri eklense de bu tablolar degismez (nafaka tuzak 9).
+    api.YASAL = yasalDonemler(2026, GOMULU.tcmb.satirlar);
+    api.VEKALET_TARIFELERI = vekaletTarifeleri(GOMULU);
+  }
+  if (dugum) module.exports = api;
+  else kok.IcraOranlar = api;
+})(this);
+
+</script>
+<script>/* hesap.js */
+/* Icra dosya hesabi motoru - UYAP "Dosya Hesabi" cizelgesinin duzeninde. Saf fonksiyon,
+   DOM'a dokunmaz. Tarihler "YYYY-AA-GG"; ic hesapta gun numarasi (UTC). Basit faiz,
+   faize faiz yok (3095 s.K. md. 3).
+
+   Cizelge (gercek bir UYAP dosya hesabiyla kurusu kurusuna tutturuldu, 26.10.2026):
+       Takipte kesinlesen miktar (TKM) = takip talebindeki butun kalemler
+     + Harc miktari    = TKM x secilen tahsil harci orani
+     + Basvurma harci
+     + Toplam faiz     = takipten sonra, yalniz ASIL alacak kalemlerine, 365 gun
+     + Vekalet ucreti  = AAUT, TKM uzerinden
+     + Masraf
+     + BSMV / KKDF / KDV / OIV = takipten sonraki faizin yuzdesi (takip talebinde istenmisse)
+     = Yekun alacak
+     - Yatan para
+     = Bakiye borc     (yatan para fazlaysa artan "borcluya iade")
+
+   girdi = {
+     takipTarihi, hesapTarihi, gunYil: 365 | 360,
+     kalemler: [{ ad, tutar, tur: "asil" | "feri",
+                  faizTur: "yasal" | "ticari" | "diger" | "yok", faizOran,   // takipten sonra (yalniz asil)
+                  oncekiBas, oncekiTur, oncekiOran }],   // istege bagli: takip oncesi faizi program hesaplasin
+     vergiler: { bsmv, kkdf, kdv, oiv },                 // yuzde
+     basvurmaHarci, masraflar: [{ tarih, tutar, aciklama }],
+     vekalet: { mod: "otomatik" | "elle" | "yok", tutar, suresinde },
+     harcOrani: 9.10,                                    // dosyanin tahsil harci orani (yuzde)
+     tahsilatlar: [{ tarih, tutar, harcOrani }],         // harcOrani bos -> dosyanin orani
+     oranlar: { yasal: [{ bas, oran }], ticari: [{ bas, oran }] }
+   }
+
+   Ara odeme (her biri kendi gunune kadar isleyen faizle) su siraya sayilir:
+     1) o gune kadarki masraflar (basvurma harci ve vekalet ucreti dahil), en eskiden  IIK 59/3, 138/3
+     2) faiz / feri kalemler (islemis ve akdi faiz, BSMV, ihtarname...), kalem sirasiyla } TBK 100:
+     3) takipten sonra islemis faiz ve vergileri                                        } once faiz, gider
+     4) asil alacak, kalem sirasiyla -> asil azalinca faizi de azalir
+     5) o ana kadar tahsil edilen paranin tahsil harci
+     6) artan -> borcluya iade
+   Harc matrahi: tahsilatin TKM'ye (2 ve 4) dusen kismi. Takipten sonraki faiz harca girmez
+   (Harclar K. md. 20); masraf ve vekalet TKM'de olmadigi icin girmez. Butun tahsilatlar dosyanin
+   oraniyla ise harc = TKM x oran (UYAP boyle gosteriyor).
+   Pesin harc hesaba ayrica girmez: tahsil harcina mahsup edilir (Harclar K. md. 29), borclunun
+   odeyecegi toplami degistirmez. Cezaevi harci borcluya yukletilemez (2548 s.K. md. 1). */
+(function (kok) {
+  "use strict";
+  var O = typeof module !== "undefined" && module.exports ? require("./oranlar.js") : kok.IcraOranlar;
+
+  function gun(t) {
+    var p = t.split("-");
+    return Math.round(Date.UTC(+p[0], +p[1] - 1, +p[2]) / 864e5);
+  }
+  function tarih(g) { return new Date(g * 864e5).toISOString().slice(0, 10); }
+  function trTarih(t) { var p = t.split("-"); return p[2] + "." + p[1] + "." + p[0]; }
+  function kurus(x) { return Math.round(x * 100 + (x >= 0 ? 1e-9 : -1e-9)) / 100; }
+  function sayi(x) { return x === null || x === undefined || x === "" ? null : +x; }
+  function gecerliTarih(t) { return typeof t === "string" && /^\d{4}-\d{2}-\d{2}$/.test(t); }
+  function oranYazi(x) { return String(x).replace(".", ","); }
+
+  /* [g1, g2) araliginda `anapara` uzerine islenen faiz, oran donemlerine bolunerek.
+     Ilk donemden onceki gunler icin ilk oran kullanilir ve `uyar` cagrilir. */
+  function faizHesapla(anapara, g1, g2, donemler, gunYil, uyar) {
+    if (!(anapara > 0) || g2 <= g1 || !donemler.length) return 0;
+    var toplam = 0;
+    for (var i = 0; i < donemler.length; i++) {
+      var bas = i === 0 ? -Infinity : donemler[i].g;
+      var son = i + 1 < donemler.length ? donemler[i + 1].g : Infinity;
+      var a = Math.max(g1, bas), b = Math.min(g2, son);
+      if (b > a) toplam += anapara * donemler[i].oran / 100 * (b - a) / gunYil;
+    }
+    if (g1 < donemler[0].g && uyar) uyar(tarih(g1));
+    return toplam;
+  }
+
+  function donemHazirla(liste) {
+    return (liste || [])
+      .filter(function (d) { return d && gecerliTarih(d.bas) && sayi(d.oran) !== null && isFinite(sayi(d.oran)); })
+      .map(function (d) { return { g: gun(d.bas), bas: d.bas, oran: +d.oran }; })
+      .sort(function (a, b) { return a.g - b.g; });
+  }
+
+  /* Icra takibinde vekalet ucreti (AAUT md. 11). `tarifeler` yururluk sirali liste
+     (oranlar.js vekaletTarifeleri); takip tarihinde yururlukte olan secilir. Hicbiri yoksa
+     ucret null + sebep (elle girilmeli). En yeni tarifenin uzerinden bir yil gectiyse yenisi
+     cikmis olabilir: ucret yine hesaplanir ama `uyari` doner (sessiz kalmasin). */
+  function vekaletUcreti(takipTutari, asilAlacak, suresinde, takipTarihi, tarifeler) {
+    var liste = tarifeler || O.VEKALET_TARIFELERI || [], t = +takipTutari;
+    if (!(t > 0)) return { ucret: null, sebep: "Takip tutarı sıfır." };
+    var uygun = liste.filter(function (x) { return !takipTarihi || x.yururluk <= takipTarihi; });
+    if (!uygun.length) {
+      return { ucret: null, sebep: "Takip tarihi " + trTarih(takipTarihi) + ": o gün yürürlükte olan avukatlık ücret " +
+               "tarifesi programda yok" + (liste.length ? " (en eskisi " + liste[0].ad + ", " + trTarih(liste[0].yururluk) + ")" : "") +
+               ". Vekâlet ücretini elle girin." };
+    }
+    var V = uygun[uygun.length - 1];
+    var r = { takipTutari: t, maktu: t <= V.esik, dilimler: [], suresinde: !!suresinde, tarife: V.ad };
+    var sonra = liste[liste.length - 1];
+    if (V === sonra && takipTarihi && takipTarihi >= (+V.yururluk.slice(0, 4) + 1) + V.yururluk.slice(4)) {
+      r.uyari = "Takip tarihinde " + V.ad + "'nden daha yeni bir avukatlık ücret tarifesi yürürlükte olabilir " +
+                "(her yıl Kasım'da yenilenir); programdaki en yeni tarife kullanıldı, ücreti kontrol edin.";
+    }
+    var asil = +asilAlacak > 0 ? +asilAlacak : t;
+    r.asilAlacak = asil;
+    var ucret;
+    if (r.maktu) {
+      ucret = Math.min(V.maktu, asil);
+      r.kirpildi = asil < V.maktu;
+    } else {
+      var kalan = t; ucret = 0;
+      V.dilimler.forEach(function (d) {
+        if (kalan <= 0) return;
+        var p = Math.min(kalan, d[0]);
+        r.dilimler.push({ tutar: p, oran: d[1], ucret: kurus(p * d[1] / 100) });
+        ucret += p * d[1] / 100; kalan -= p;
+      });
+    }
+    r.tam = kurus(ucret);
+    r.ucret = r.suresinde ? kurus(r.tam * 3 / 4) : r.tam;
+    return r;
+  }
+
+  var VERGILER = ["bsmv", "kkdf", "kdv", "oiv"];
+
+  function hesapla(girdi) {
+    var uyarilar = [];
+    var gunYil = +girdi.gunYil === 360 ? 360 : 365;
+    if (!gecerliTarih(girdi.takipTarihi) || !gecerliTarih(girdi.hesapTarihi)) {
+      return { hata: "Takip tarihi ve hesap tarihi girilmeli." };
+    }
+    var TK = gun(girdi.takipTarihi), T = gun(girdi.hesapTarihi);
+    if (T < TK) return { hata: "Hesap tarihi takip tarihinden önce olamaz." };
+
+    var tablolar = { yasal: donemHazirla(girdi.oranlar && girdi.oranlar.yasal),
+                     ticari: donemHazirla(girdi.oranlar && girdi.oranlar.ticari) };
+    var erkenUyari = {};
+    function erken(ad) {
+      return function (t) { if (!erkenUyari[ad] || t < erkenUyari[ad]) erkenUyari[ad] = t; };
+    }
+    var tabloKullanildi = false;
+    function donemlerAl(tur, oran, ad) {
+      if (tur === "yasal" || tur === "ticari") {
+        if (!tablolar[tur].length) {
+          uyarilar.push(ad + ": " + (tur === "yasal" ? "yasal" : "ticari") + " faiz tablosu boş; faiz işletilmedi.");
+          return [];
+        }
+        tabloKullanildi = true;
+        return tablolar[tur];
+      }
+      if (tur === "diger" || tur === "sabit") {
+        // sayi("") null doner ve JS'te null >= 0 dogrudur: bos oran sessizce %0 olmasin
+        if (sayi(oran) === null || !(sayi(oran) >= 0)) { uyarilar.push(ad + ": faiz oranı yazılmadı; faiz işletilmedi."); return []; }
+        return [{ g: -Infinity, bas: "-", oran: +oran }];
+      }
+      return [];
+    }
+    function faizAdi(tur, oran) {
+      if (tur === "yasal") return "Yasal";
+      if (tur === "ticari") return "Ticari (avans)";
+      if ((tur === "diger" || tur === "sabit") && sayi(oran) !== null && sayi(oran) >= 0) return "Diğer (%" + oranYazi(+oran) + ")";
+      return "";
+    }
+
+    /* ---- Takipte kesinlesen miktar: kalemler ---- */
+    var kalemler = [];
+    (girdi.kalemler || []).forEach(function (k, i) {
+      var tutar = sayi(k && k.tutar);
+      var ad = (k && k.ad) || (i + 1) + ". kalem";
+      if (!(tutar > 0)) {
+        if (k && (k.ad || tutar !== null)) uyarilar.push(ad + ": tutarı girilmediği için hesaba katılmadı.");
+        return;
+      }
+      var x = { ad: ad, tur: k.tur === "feri" ? "feri" : "asil", tutar: kurus(tutar), kalan: kurus(tutar), odenen: 0,
+                islemis: 0, islemisOdenen: 0, islemisGun: 0, oncekiAdi: "", sonra: 0, donemler: [], faizAdi: "", sonIslem: TK };
+      if (x.tur === "asil") {
+        if (k.faizTur && k.faizTur !== "yok") {
+          x.donemler = donemlerAl(k.faizTur, k.faizOran, ad);
+          if (x.donemler.length) x.faizAdi = faizAdi(k.faizTur, k.faizOran);
+        }
+        if (gecerliTarih(k.oncekiBas) && k.oncekiTur && k.oncekiTur !== "yok") {
+          var g0 = gun(k.oncekiBas);
+          if (g0 >= TK) {
+            uyarilar.push(ad + ": takipten önceki faizin başlangıcı takip tarihinden önce olmalı; o faiz hesaplanmadı.");
+          } else {
+            var on = donemlerAl(k.oncekiTur, k.oncekiOran, ad);
+            if (on.length) {
+              x.islemis = kurus(faizHesapla(x.tutar, g0, TK, on, gunYil, erken(ad)));
+              x.islemisGun = TK - g0; x.oncekiAdi = faizAdi(k.oncekiTur, k.oncekiOran);
+            }
+          }
+        }
+      }
+      kalemler.push(x);
+    });
+    if (!kalemler.length) return { hata: "En az bir alacak kalemi (tutarıyla) girilmeli." };
+    var asillar = kalemler.filter(function (k) { return k.tur === "asil"; });
+    if (!asillar.length) uyarilar.push("Asıl alacak türünde kalem yok: takipten sonra faiz işlemez.");
+    var TKM = kurus(kalemler.reduce(function (t, k) { return t + k.tutar + k.islemis; }, 0));
+    var asilToplam = kurus(asillar.reduce(function (t, k) { return t + k.tutar; }, 0));
+
+    var vergiOran = {};
+    VERGILER.forEach(function (a) { var x = sayi(girdi.vergiler && girdi.vergiler[a]); vergiOran[a] = x > 0 ? x : 0; });
+
+    var r = sayi(girdi.harcOrani);
+    if (r === null || !(r >= 0)) { uyarilar.push("Tahsil harcı oranı seçilmedi; harç hesaplanmadı."); r = 0; }
+
+    /* ---- Masraflar: basvurma harci + vekalet ucreti + digerleri ---- */
+    var ham = [];
+    var bh = sayi(girdi.basvurmaHarci);
+    if (bh > 0) ham.push({ tarih: girdi.takipTarihi, tutar: bh, aciklama: "Başvurma harcı", tur: "basvurma" });
+    var vk = girdi.vekalet || { mod: "yok" }, vekaletBilgi = null;
+    if (vk.mod === "otomatik") {
+      vekaletBilgi = vekaletUcreti(TKM, asilToplam, vk.suresinde, girdi.takipTarihi, girdi.vekaletTarifeleri);
+      if (vekaletBilgi.ucret === null) uyarilar.push("Vekâlet ücreti hesaplanmadı: " + vekaletBilgi.sebep);
+      else ham.push({ tarih: girdi.takipTarihi, tutar: vekaletBilgi.ucret, aciklama: "Vekâlet ücreti", tur: "vekalet" });
+      if (vekaletBilgi.uyari) uyarilar.push(vekaletBilgi.uyari);
+    } else if (vk.mod === "elle" && sayi(vk.tutar) > 0) {
+      vekaletBilgi = { ucret: kurus(+vk.tutar), elle: true };
+      ham.push({ tarih: girdi.takipTarihi, tutar: +vk.tutar, aciklama: "Vekâlet ücreti", tur: "vekalet" });
+    }
+    (girdi.masraflar || []).forEach(function (m) {
+      if (m) ham.push({ tarih: m.tarih, tutar: m.tutar, aciklama: m.aciklama, tur: "masraf" });
+    });
+    var mTarihsiz = 0, mSonra = 0;
+    var masraflar = ham.filter(function (m) {
+      if (!(sayi(m.tutar) > 0)) return false;
+      if (!gecerliTarih(m.tarih)) { mTarihsiz++; return false; }
+      if (gun(m.tarih) > T) { mSonra++; return false; }
+      return true;
+    }).map(function (m, i) {
+      return { sira: i, tarih: m.tarih, g: gun(m.tarih), tutar: kurus(+m.tutar), kalan: kurus(+m.tutar), odenen: 0,
+               aciklama: m.aciklama || "Masraf", tur: m.tur };
+    }).sort(function (a, b) { return a.g - b.g || a.sira - b.sira; });
+    if (mTarihsiz) uyarilar.push(mTarihsiz + " masrafın tarihi girilmediği için hesaba katılmadı.");
+    if (mSonra) uyarilar.push(mSonra + " masraf hesap tarihinden sonra olduğu için hesaba katılmadı.");
+
+    /* ---- Yatan para ---- */
+    var once = 0, sonra = 0, tarihsiz = 0;
+    var tahsilatlar = (girdi.tahsilatlar || []).filter(function (o) {
+      if (!o || !(sayi(o.tutar) > 0)) return false;
+      if (!gecerliTarih(o.tarih)) { tarihsiz++; return false; }
+      var g = gun(o.tarih);
+      if (g < TK) { once++; return false; }
+      if (g > T) { sonra++; return false; }
+      return true;
+    }).map(function (o, i) {
+      var or = sayi(o.harcOrani);
+      return { sira: i, tarih: o.tarih, g: gun(o.tarih), tutar: kurus(+o.tutar), oran: or !== null && or >= 0 ? or : r };
+    }).sort(function (a, b) { return a.g - b.g || a.sira - b.sira; });
+    if (tarihsiz) uyarilar.push(tarihsiz + " ödemenin tarihi girilmediği için hesaba katılmadı.");
+    if (once) uyarilar.push(once + " ödeme takip tarihinden önce: takip tutarından zaten düşülmüş olmalı, hesaba katılmadı.");
+    if (sonra) uyarilar.push(sonra + " ödeme hesap tarihinden sonra olduğu için hesaba katılmadı.");
+    var tekOran = tahsilatlar.every(function (o) { return Math.abs(o.oran - r) < 1e-9; });
+
+    function islet(t) {
+      asillar.forEach(function (k) {
+        if (!k.donemler.length || t <= k.sonIslem) return;
+        k.sonra += faizHesapla(k.kalan, k.sonIslem, t, k.donemler, gunYil, erken(k.ad));
+        k.sonIslem = t;
+      });
+    }
+    // Takip sonrasi faiz kalem kalem kurusa yuvarlanip toplanir; vergiler o toplamin yuzdesi.
+    function sonraBorc() {
+      var F = kurus(asillar.reduce(function (t, k) { return t + kurus(k.sonra); }, 0));
+      var v = {}, top = F;
+      VERGILER.forEach(function (a) { v[a] = kurus(F * vergiOran[a] / 100); top += v[a]; });
+      return { faiz: F, vergi: v, toplam: kurus(top) };
+    }
+    var matrahlar = [];
+    function harcBorcu() {
+      if (tekOran) return kurus(matrahlar.reduce(function (t, x) { return t + x.m; }, 0) * r / 100);
+      return kurus(matrahlar.reduce(function (t, x) { return t + kurus(x.m * x.oran / 100); }, 0));
+    }
+
+    var sonraOdenen = 0, harcOdenen = 0, kayit = [];
+    tahsilatlar.forEach(function (o) {
+      islet(o.g);
+      var kalan = o.tutar, d = { masraf: 0, feri: 0, sonra: 0, asil: 0, harc: 0, matrah: 0 };
+      function al(borc) {
+        var x = kurus(Math.min(kurus(borc), kalan));
+        if (x > 0) { kalan = kurus(kalan - x); return x; }
+        return 0;
+      }
+      masraflar.forEach(function (m) {
+        if (m.g > o.g) return;
+        var x = al(m.kalan);
+        if (x) { m.kalan = kurus(m.kalan - x); m.odenen = kurus(m.odenen + x); d.masraf += x; }
+      });
+      kalemler.forEach(function (k) {
+        var x;
+        if (k.tur === "feri") {
+          x = al(k.kalan);
+          if (x) { k.kalan = kurus(k.kalan - x); k.odenen = kurus(k.odenen + x); }
+        } else {
+          x = al(k.islemis - k.islemisOdenen);
+          if (x) k.islemisOdenen = kurus(k.islemisOdenen + x);
+        }
+        if (x) { d.feri += x; d.matrah += x; }
+      });
+      var x = al(sonraBorc().toplam - sonraOdenen);
+      if (x) { sonraOdenen = kurus(sonraOdenen + x); d.sonra = x; }
+      asillar.forEach(function (k) {
+        var y = al(k.kalan);
+        if (y) {
+          k.kalan = kurus(k.kalan - y); k.odenen = kurus(k.odenen + y); d.asil += y; d.matrah += y;
+          if (k.kalan === 0) k.kapanis = o.g;
+        }
+      });
+      d.matrah = kurus(d.matrah);
+      matrahlar.push({ m: d.matrah, oran: o.oran });
+      x = al(harcBorcu() - harcOdenen);
+      if (x) { harcOdenen = kurus(harcOdenen + x); d.harc = x; }
+      kayit.push({ tarih: o.tarih, tutar: o.tutar, harcOrani: o.oran, masraf: kurus(d.masraf), feri: kurus(d.feri),
+                   sonra: d.sonra, asil: kurus(d.asil), harc: d.harc, iade: kalan, matrah: d.matrah,
+                   harcTutari: kurus(d.matrah * o.oran / 100) });
+    });
+    islet(T);
+
+    Object.keys(erkenUyari).forEach(function (ad) {
+      uyarilar.push(ad + ": " + trTarih(erkenUyari[ad]) + " tarihinden önceki günler için faiz tablosunda oran yok; " +
+                    "o günlere tablodaki ilk oran uygulandı.");
+    });
+    // Yasal/ticari oran bir yarim yil icin ancak onceki 31 Aralik / 30 Haziran'dan sonra kesinlesir.
+    if (tabloKullanildi && gecerliTarih(girdi.oranKesinSon) && T > gun(girdi.oranKesinSon)) {
+      uyarilar.push("Yasal / ticari faiz oranları " + trTarih(girdi.oranKesinSon) + " tarihine kadar kesin. " +
+                    "Sonraki günler için son bilinen oran kullanıldı; güncel veri gelince hesap değişebilir.");
+    }
+
+    /* ---- Cizelge ---- */
+    function top(dizi, f) { return kurus(dizi.reduce(function (t, x) { return t + f(x); }, 0)); }
+    var sb = sonraBorc();
+    var odenenMatrah = top(matrahlar, function (x) { return x.m; });
+    var kalanMatrah = kurus(TKM - odenenMatrah);
+    var harc = tekOran ? kurus(TKM * r / 100)
+                       : kurus(top(matrahlar, function (x) { return kurus(x.m * x.oran / 100); }) + kurus(kalanMatrah * r / 100));
+    function masrafTop(tur) { return top(masraflar.filter(function (m) { return m.tur === tur; }), function (m) { return m.tutar; }); }
+    var basvurma = masrafTop("basvurma"), vekalet = masrafTop("vekalet"), masraf = masrafTop("masraf");
+    var yekun = kurus(TKM + harc + basvurma + sb.toplam + vekalet + masraf);
+    var yatan = top(kayit, function (o) { return o.tutar; });
+    var iade = top(kayit, function (o) { return o.iade; });
+    var bakiye = kurus(yekun - yatan + iade);
+    var kalan = {
+      masraf: top(masraflar, function (m) { return m.kalan; }),
+      feri: top(kalemler, function (k) { return k.tur === "feri" ? k.kalan : k.islemis - k.islemisOdenen; }),
+      sonra: kurus(sb.toplam - sonraOdenen),
+      asil: top(asillar, function (k) { return k.kalan; }),
+      harc: kurus(harc - harcOdenen)
+    };
+    var kalanToplam = kurus(kalan.masraf + kalan.feri + kalan.sonra + kalan.asil + kalan.harc);
+    if (Math.abs(kalanToplam - bakiye) > 0.001) {
+      uyarilar.push("İÇ TUTARSIZLIK: kalanların toplamı " + kalanToplam.toFixed(2) + " ₺, bakiye borç " + bakiye.toFixed(2) +
+                    " ₺. Bu bir program hatasıdır; hesabı kullanmayın ve bildirin.");
+    }
+    if (iade > 0) uyarilar.push("Yatan para borcun tamamını " + iade.toFixed(2) + " ₺ aşıyor: bu tutar borçluya iade edilecek.");
+
+    return {
+      takipTarihi: girdi.takipTarihi, hesapTarihi: girdi.hesapTarihi, gun: T - TK, gunYil: gunYil,
+      kalemler: kalemler.map(function (k) {
+        return { ad: k.ad, tur: k.tur, tutar: k.tutar, faizAdi: k.faizAdi, oncekiAdi: k.oncekiAdi,
+                 islemis: k.islemis, islemisGun: k.islemisGun, islemisKalan: kurus(k.islemis - k.islemisOdenen),
+                 sonra: kurus(k.sonra),
+                 sonraGun: k.tur === "asil" && k.donemler.length ? (k.kapanis !== undefined ? k.kapanis : T) - TK : 0,
+                 odenen: k.odenen, kalan: k.kalan, kapandi: k.kapanis !== undefined ? tarih(k.kapanis) : null };
+      }),
+      masraflar: masraflar.map(function (m) {
+        return { tarih: m.tarih, aciklama: m.aciklama, tur: m.tur, tutar: m.tutar, odenen: m.odenen, kalan: m.kalan };
+      }),
+      tahsilatlar: kayit,
+      ozet: {
+        tkm: TKM, harcOrani: r, harc: harc, tekOran: tekOran, basvurma: basvurma,
+        faiz: sb.faiz, vergi: sb.vergi, vergiOran: vergiOran, vekalet: vekalet, masraf: masraf,
+        yekun: yekun, yatan: yatan, iade: iade, bakiye: bakiye, kalan: kalan,
+        odenenMatrah: odenenMatrah, kalanMatrah: kalanMatrah,
+        cezaevi: kurus(TKM * O.CEZAEVI_YUZDE / 100)
+      },
+      vekalet: vekaletBilgi,
+      uyarilar: uyarilar
+    };
+  }
+
+  var api = { hesapla: hesapla, vekaletUcreti: vekaletUcreti, faizHesapla: faizHesapla,
+              gun: gun, tarih: tarih, kurus: kurus, VERGILER: VERGILER };
+  if (typeof module !== "undefined" && module.exports) module.exports = api;
+  else kok.IcraHesap = api;
+})(this);
+
+</script>
+<script>/* arayuz.js */
+/* Ekran: girilenleri toplar, IcraHesap.hesapla'ya verir, sonucu UYAP "Dosya Hesabi" cizelgesi
+   duzeninde basar. Girdi tablolari yalniz satir eklenip silinince ya da bir secim degisince
+   yeniden kurulur (yazarken imlec kaybolmasin).
+
+   VERI (oranlar, harclar, AAUT) uc katmandan, sirayla (nafaka + maas haczi projelerinden):
+     1) dosyaya gomulu veri (site_yap.js kurarken koyar)
+     2) daha once internetten indirilmis veri (localStorage onbellegi)
+     3) internet: acilista dort kaynak AYNI ANDA denenir (bu site, github.io, GitHub ham, jsDelivr),
+        8 sn sure siniri. Denetimden (veriDenetle) gecen EN YENI olan kullanilir ve onbellege yazilir.
+   Hangisinin kullanildigi en ustte yazar; veri eskiyse uyari cikar. Hicbiri sessiz degil. */
+(function () {
+  "use strict";
+  var $ = function (id) { return document.getElementById(id); };
+  var kutu = $("yuklemeHatasi");
+  if (!window.IcraHesap || !window.IcraOranlar || !window.IcraOranlar.GOMULU) {
+    kutu.hidden = false;
+    kutu.textContent = "Program eksik yüklendi, hesap yapılamaz: " +
+      (!window.ICRA_GOMULU ? "veri.js " : "") + (!window.IcraOranlar ? "oranlar.js " : "") + (!window.IcraHesap ? "hesap.js" : "") +
+      " bulunamadı. Tek dosyalık sürümü (Icra Dosya Hesabi.html) kullanın.";
+    return;
+  }
+  var H = window.IcraHesap, O = window.IcraOranlar;
+  var ANAHTAR = "icraDosyaHesabi.v3", SURUM = 3, VERI_ANAHTAR = "icraDosyaHesabi.veri.v1";
+  var ESKI_GUN = 45;                     // robot ayda bir "kontrol" damgasi atar; bundan eskisi = durmus olabilir
+  var DEPO = "Ertugrul2442/icra-dosya-hesabi";
+  var SITE = "https://ertugrul2442.github.io/icra-dosya-hesabi/";
+  var KAYNAKLAR = [
+    { ad: "github.io", adres: SITE + "veri.json" },
+    { ad: "GitHub", adres: "https://raw.githubusercontent.com/" + DEPO + "/main/docs/veri.json" },
+    { ad: "jsDelivr", adres: "https://cdn.jsdelivr.net/gh/" + DEPO + "@main/docs/veri.json" }
+  ];
+  if (/^https?:$/.test(location.protocol) && location.href.indexOf(SITE) !== 0) {
+    KAYNAKLAR.unshift({ ad: "bu site", adres: "veri.json" });    // baska bir yerde yayindaysa kendi kopyasi
+  }
+  var HARCLAR = O.TAHSIL_HARCI_LISTESI;
+  var FAIZ_TURLERI = [["yasal", "Yasal"], ["ticari", "Ticari (avans)"], ["diger", "Diğer (oran yazın)"], ["yok", "Faiz yok"]];
+  var KALEM_TURLERI = [["asil", "Asıl alacak"], ["feri", "Faiz / ferî"]];
+  var VERGI_ADLARI = { bsmv: "B.S.M.V", kkdf: "K.K.D.F", kdv: "K.D.V", oiv: "Özel İletişim Vergisi" };
+
+  function bugun() {
+    var d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+    return d.toISOString().slice(0, 10);
+  }
+  function gunFarki(a, b) { return Math.round((Date.parse(b) - Date.parse(a)) / 864e5); }
+  function oranMetni(x) { return String(x).replace(".", ","); }
+
+  /* ---- Veri katmanlari ---- */
+  var gomulu = O.GOMULU, aktif = gomulu, aktifKaynak = "dosya", veriSurumu = 0;
+  var agSonuc = null;                    // null: kontrol suruyor; [] / [{ad, durum}]: bitti
+  try {
+    var ob = JSON.parse(localStorage.getItem(VERI_ANAHTAR));
+    if (ob && !O.veriDenetle(ob, gomulu).length && O.yeniMi(ob, gomulu) > 0) { aktif = ob; aktifKaynak = "önbellek"; }
+  } catch (e) { /* onbellek okunamadi ya da bozuk: gomulu veriyle devam, kutuda yazar */ }
+  function tablolar() { return O.faizTablolari(aktif); }
+  function getir(k) {
+    return new Promise(function (bitir) {
+      var ctl = typeof AbortController !== "undefined" ? new AbortController() : null;
+      var zaman = setTimeout(function () { if (ctl) ctl.abort(); bitir({ ad: k.ad, durum: "cevap gelmedi (8 sn)" }); }, 8000);
+      fetch(k.adres, { cache: "no-store", signal: ctl ? ctl.signal : undefined })
+        .then(function (c) { if (!c.ok) throw new Error("HTTP " + c.status); return c.text(); })
+        .then(function (metin) {
+          var j; try { j = JSON.parse(metin); } catch (e) { throw new Error("veri değil (engelleme sayfası olabilir)"); }
+          var s = O.veriDenetle(j, gomulu);
+          clearTimeout(zaman);
+          bitir(s.length ? { ad: k.ad, durum: "reddedildi: " + s[0] } : { ad: k.ad, durum: "tamam", veri: j });
+        })
+        .catch(function (e) { clearTimeout(zaman); bitir({ ad: k.ad, durum: "ulaşılamadı (" + (e && e.message || e) + ")" }); });
+    });
+  }
+  function tazele() {
+    if (typeof fetch === "undefined") { agSonuc = []; durumYaz(); return; }
+    Promise.all(KAYNAKLAR.map(getir)).then(function (sonuclar) {
+      agSonuc = sonuclar;
+      var iyi = sonuclar.filter(function (x) { return x.veri; })
+                        .sort(function (a, b) { return O.yeniMi(b.veri, a.veri); })[0];
+      if (iyi && O.yeniMi(iyi.veri, aktif) > 0) {
+        aktif = iyi.veri; aktifKaynak = iyi.ad; veriSurumu++;
+        try { localStorage.setItem(VERI_ANAHTAR, JSON.stringify(aktif)); } catch (e) { /* kaydedilemedi: kutuda yazar */ }
+        if (!durum.oranlarElle) oranlariKur();
+        maktuYaz(); hesapla();
+      }
+      durumYaz();
+    });
+  }
+  function durumYaz() {
+    var el = $("veriDurumu"), k = aktif.kontrol, yas = gunFarki(k, bugun());
+    var tamam = agSonuc && agSonuc.some(function (x) { return x.durum === "tamam"; });
+    var kaynakAdi = aktifKaynak === "dosya" ? "dosyanın içindeki veri" : aktifKaynak === "önbellek" ? "daha önce indirilmiş veri" : aktifKaynak;
+    var metin, uyari = false;
+    if (agSonuc === null) metin = "Güncel oranlar kontrol ediliyor… Şimdilik " + kaynakAdi + " (" + trT(k) + " kontrolü) kullanılıyor.";
+    else if (tamam) {
+      metin = (aktifKaynak !== "dosya" && aktifKaynak !== "önbellek" ? "İnternetten güncellendi. " : "Oranlar güncel. ") +
+        "Merkez Bankası ve Harçlar Kanunu en son " + trT(k) + " tarihinde kontrol edildi.";
+      if (yas > ESKI_GUN) { uyari = true; metin += " DİKKAT: bu " + yas + " gün önce; otomatik güncelleme durmuş olabilir, programı dağıtana haber verin."; }
+    } else {
+      var ret = agSonuc.some(function (x) { return x.durum.indexOf("reddedildi") === 0; });
+      uyari = ret || yas > ESKI_GUN;
+      metin = (ret ? "İnternetten gelen veri denetimden geçmedi, kullanılmadı (sebebi aşağıda); "
+                   : "İnternetteki güncel oranlara ulaşılamadı; ") + kaynakAdi + " kullanılıyor (" + trT(k) + " kontrolü" +
+        (yas > ESKI_GUN ? ", " + yas + " gün önce — güncel dosyayı " + SITE + " adresinden indirin" : "") + ").";
+    }
+    el.className = "kutu " + (uyari ? "uyari" : "bilgi");
+    el.innerHTML = kac(metin) + (agSonuc && agSonuc.length ? "<span class='kucuk'>" + agSonuc.map(function (x) {
+      return kac(x.ad + ": " + x.durum);
+    }).join(" · ") + "</span>" : "");
+  }
+
+  /* ---- Durum (girilenler) ---- */
+  function bosKalem(ad, tur) {
+    return { ad: ad || "", tutar: "", tur: tur || "asil", faizTur: tur === "feri" ? "yok" : "yasal", faizOran: "",
+             oncekiBas: "", oncekiTur: "yasal", oncekiOran: "" };
+  }
+  function bosDurum() {
+    return { dosyaNo: "", takipTarihi: "", hesapTarihi: bugun(), gunYil: "365", harcSecim: "4.55", harcElle: "",
+             kalemler: [bosKalem("Asıl alacak", "asil")], oncekiAcik: false,
+             basvurma: "", vekalet: { mod: "otomatik", tutar: "", suresinde: false }, masraflar: [],
+             vergiler: { bsmv: "", kkdf: "", kdv: "", oiv: "" }, tahsilatlar: [], oranlarElle: null };
+  }
+  var durum;
+  try { durum = JSON.parse(localStorage.getItem(ANAHTAR)); } catch (e) { durum = null; }
+  if (!durum || !durum.kalemler) durum = bosDurum();
+
+  /* "1.234,56" / "1234,56" / "1234.56" / "1.234" hepsini okur. Okunamazsa NaN. */
+  function sayiOku(s) {
+    if (s === null || s === undefined) return null;
+    s = String(s).replace(/[\s₺%]/g, "");
+    if (s === "") return null;
+    if (s.indexOf(",") >= 0) s = s.replace(/\./g, "").replace(",", ".");
+    else if (/^\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, "");
+    return /^-?\d*\.?\d+$/.test(s) ? +s : NaN;
+  }
+  function para(x) {
+    return (x === null || x === undefined || isNaN(x)) ? "—" :
+      x.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " ₺";
+  }
+  function yuzde(x) { return "%" + (+x).toLocaleString("tr-TR", { maximumFractionDigits: 4 }); }
+  function trT(t) { if (!t) return "—"; var p = t.split("-"); return p[2] + "." + p[1] + "." + p[0]; }
+  function kac(s) {
+    return String(s === null || s === undefined ? "" : s).replace(/[&<>"]/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+    });
+  }
+
+  /* ---- Girdi tablolari ---- */
+  function secim(alan, i, deger, secenekler, kapali) {
+    return '<select data-alan="' + alan + '" data-i="' + i + '"' + (kapali ? " disabled" : "") + ">" + secenekler.map(function (s) {
+      return '<option value="' + s[0] + '"' + (s[0] === deger ? " selected" : "") + ">" + s[1] + "</option>";
+    }).join("") + "</select>";
+  }
+  function giris(alan, i, deger, tip, ek) {
+    return '<input data-alan="' + alan + '" data-i="' + i + '" value="' + kac(deger) + '"' +
+      (tip === "date" ? ' type="date"' : tip === "sayi" ? ' inputmode="decimal"' : "") + (ek || "") + ">";
+  }
+  var HARC_SECENEK = HARCLAR.map(function (h) { return [String(h.oran), h.kisa]; });
+  function harcAciklamaYaz() {
+    var h = HARCLAR.filter(function (x) { return String(x.oran) === durum.harcSecim; })[0];
+    $("harcAciklama").textContent = h ? h.aciklama : "Listede olmayan bir oran yazın.";
+    $("harcElleKap").hidden = durum.harcSecim !== "elle";
+  }
+
+  function kalemleriKur() {
+    var on = durum.oncekiAcik;
+    $("kalemTablo").tHead.innerHTML = "<tr><th>Kalem</th><th>Tutar (₺)</th><th>Tür</th><th>Takipten sonra faiz</th><th>Oran %</th>" +
+      (on ? "<th>Önceki faiz başlangıcı</th><th>Önceki faiz</th><th>Oran %</th>" : "") + "<th></th></tr>";
+    $("kalemTablo").tBodies[0].innerHTML = durum.kalemler.map(function (k, i) {
+      var feri = k.tur === "feri";
+      return "<tr>" +
+        "<td style='min-width:170px'>" + giris("k.ad", i, k.ad) + "</td>" +
+        "<td style='min-width:130px'>" + giris("k.tutar", i, k.tutar, "sayi") + "</td>" +
+        "<td style='min-width:120px'>" + secim("k.tur", i, k.tur, KALEM_TURLERI) + "</td>" +
+        "<td style='min-width:140px'>" + secim("k.faizTur", i, feri ? "yok" : k.faizTur, FAIZ_TURLERI, feri) + "</td>" +
+        "<td style='min-width:70px'>" + giris("k.faizOran", i, k.faizOran, "sayi", !feri && k.faizTur === "diger" ? "" : " disabled") + "</td>" +
+        (on ? "<td>" + giris("k.oncekiBas", i, k.oncekiBas, "date", feri ? " disabled" : "") + "</td>" +
+              "<td style='min-width:140px'>" + secim("k.oncekiTur", i, k.oncekiTur, FAIZ_TURLERI.slice(0, 3), feri) + "</td>" +
+              "<td style='min-width:70px'>" + giris("k.oncekiOran", i, k.oncekiOran, "sayi", !feri && k.oncekiTur === "diger" ? "" : " disabled") + "</td>" : "") +
+        "<td><button class='sil' title='Satırı sil' data-sil='kalemler' data-i='" + i + "'>×</button></td></tr>";
+    }).join("");
+  }
+  function masraflariKur() {
+    $("masrafTablo").tBodies[0].innerHTML = durum.masraflar.map(function (m, i) {
+      return "<tr><td>" + giris("m.tarih", i, m.tarih, "date") + "</td><td style='min-width:200px'>" + giris("m.aciklama", i, m.aciklama) +
+        "</td><td style='min-width:120px'>" + giris("m.tutar", i, m.tutar, "sayi") +
+        "</td><td><button class='sil' title='Satırı sil' data-sil='masraflar' data-i='" + i + "'>×</button></td></tr>";
+    }).join("") || "<tr><td colspan='4' class='kucuk'>Masraf yok.</td></tr>";
+  }
+  function tahsilatlariKur() {
+    var sec = [["", "Dosyadaki oran"]].concat(HARC_SECENEK);
+    $("tahsilatTablo").tBodies[0].innerHTML = durum.tahsilatlar.map(function (t, i) {
+      return "<tr><td>" + giris("t.tarih", i, t.tarih, "date") + "</td><td style='min-width:120px'>" + giris("t.tutar", i, t.tutar, "sayi") +
+        "</td><td style='min-width:260px'>" + secim("t.harcOrani", i, t.harcOrani, sec) +
+        "</td><td><button class='sil' title='Satırı sil' data-sil='tahsilatlar' data-i='" + i + "'>×</button></td></tr>";
+    }).join("") || "<tr><td colspan='4' class='kucuk'>Ödeme yok.</td></tr>";
+  }
+  // Ekrandaki tablo: elle degistirildiyse o, degilse guncel veriden turetilen (metin olarak)
+  function aktifOranMetni() {
+    var t = tablolar();
+    function cevir(d) { return { bas: d.bas, oran: oranMetni(d.oran) }; }
+    return { yasal: t.yasal.map(cevir), ticari: t.ticari.map(cevir) };
+  }
+  function oranlariKur() {
+    var tab = durum.oranlarElle || aktifOranMetni();
+    ["yasal", "ticari"].forEach(function (tur) {
+      $(tur + "Tablo").tBodies[0].innerHTML = tab[tur].map(function (d, i) {
+        return "<tr><td>" + giris("o." + tur + ".bas", i, d.bas, "date") + "</td><td style='width:90px'>" + giris("o." + tur + ".oran", i, d.oran, "sayi") +
+          "</td><td><button class='sil' title='Satırı sil' data-sil='o." + tur + "' data-i='" + i + "'>×</button></td></tr>";
+      }).join("");
+    });
+    $("oranDurumu").hidden = !durum.oranlarElle;
+    $("oranDurumu").textContent = "Faiz tablolarını elle değiştirdiniz: güncel oranlar KULLANILMIYOR. " +
+      "Güncellemeleri almak için \"Güncel oranlara dön\"e basın.";
+  }
+  function elleBasla() { if (!durum.oranlarElle) durum.oranlarElle = aktifOranMetni(); }
+  function maktuYaz() {
+    var yil = durum.takipTarihi ? +durum.takipTarihi.slice(0, 4) : null;
+    var mk = yil ? O.maktuHarc(aktif, yil) : null;
+    $("basvurmaDugme").textContent = !yil ? "Takip tarihi girin" : mk ? yil + " tutarı: " + para(mk.basvurma) : yil + " tutarı programda yok";
+    $("maktuNotu").textContent = !yil ? "" : mk
+      ? "Düğmelerin koyduğu tutarlar " + yil + " tarifesinden: suret " + para(mk.vekaletSuret) + ", daire dışı haciz " + para(mk.hacizDisari) + "."
+      : "DİKKAT: " + yil + " yılının harç tutarları programda yok; tutarları kendiniz yazın.";
+  }
+  function ustuKur() {
+    $("harcSecim").innerHTML = HARC_SECENEK.concat([["elle", "Başka oran (elle yazın)"]]).map(function (s) {
+      return '<option value="' + s[0] + '">' + s[1] + "</option>";
+    }).join("");
+    ["dosyaNo", "takipTarihi", "hesapTarihi", "gunYil", "harcSecim", "harcElle", "basvurma"].forEach(function (id) { $(id).value = durum[id]; });
+    $("vekaletMod").value = durum.vekalet.mod; $("vekaletTutar").value = durum.vekalet.tutar;
+    $("suresinde").checked = !!durum.vekalet.suresinde; $("oncekiAcik").checked = !!durum.oncekiAcik;
+    Object.keys(VERGI_ADLARI).forEach(function (a) { $("v_" + a).value = durum.vergiler[a] || ""; });
+    harcAciklamaYaz(); maktuYaz();
+  }
+  function hepsiniKur() { ustuKur(); kalemleriKur(); masraflariKur(); tahsilatlariKur(); oranlariKur(); hesapla(); }
+
+  /* ---- Degisiklikleri durum'a yaz ---- */
+  var UST = { dosyaNo: 1, takipTarihi: 1, hesapTarihi: 1, gunYil: 1, harcSecim: 1, harcElle: 1, basvurma: 1 };
+  function degisti(e) {
+    var el = e.target, a = el.getAttribute("data-alan"), i = +el.getAttribute("data-i");
+    if (UST[el.id]) {
+      durum[el.id] = el.value;
+      if (el.id === "harcSecim") harcAciklamaYaz();
+      if (el.id === "takipTarihi") maktuYaz();
+    }
+    else if (el.id === "vekaletMod") durum.vekalet.mod = el.value;
+    else if (el.id === "vekaletTutar") durum.vekalet.tutar = el.value;
+    else if (el.id === "suresinde") durum.vekalet.suresinde = el.checked;
+    else if (el.id === "oncekiAcik") { durum.oncekiAcik = el.checked; kalemleriKur(); }
+    else if (a) {
+      var p = a.split(".");
+      if (p[0] === "k") {
+        durum.kalemler[i][p[1]] = el.value;
+        if (/tur$|Tur$/.test(p[1]) && e.type === "change") kalemleriKur();
+      } else if (p[0] === "m") durum.masraflar[i][p[1]] = el.value;
+      else if (p[0] === "t") durum.tahsilatlar[i][p[1]] = el.value;
+      else if (p[0] === "o") {
+        if (!durum.oranlarElle) { elleBasla(); durum.oranlarElle[p[1]][i][p[2]] = el.value; oranlariKur(); }
+        else durum.oranlarElle[p[1]][i][p[2]] = el.value;
+      }
+      else if (p[0] === "v") durum.vergiler[p[1]] = el.value;
+    } else return;
+    hesapla();
+  }
+  document.addEventListener("input", degisti);
+  document.addEventListener("change", degisti);
+
+  document.addEventListener("click", function (e) {
+    var el = e.target.closest("button"); if (!el) return;
+    var sil = el.getAttribute("data-sil"), ekle = el.getAttribute("data-ekle"), oe = el.getAttribute("data-oran-ekle");
+    if (sil) {
+      var i = +el.getAttribute("data-i");
+      if (sil.indexOf("o.") === 0) { elleBasla(); durum.oranlarElle[sil.slice(2)].splice(i, 1); oranlariKur(); }
+      else { durum[sil].splice(i, 1); ({ kalemler: kalemleriKur, masraflar: masraflariKur, tahsilatlar: tahsilatlariKur })[sil](); }
+      hesapla(); return;
+    }
+    if (oe) { elleBasla(); durum.oranlarElle[oe].push({ bas: "", oran: "" }); oranlariKur(); hesapla(); return; }
+    if (ekle) ekleIslem(ekle);
+  });
+
+  function ekleIslem(ne) {
+    var ilkAsil = durum.kalemler.filter(function (k) { return k.tur !== "feri"; })[0];
+    var asilTutar = ilkAsil ? sayiOku(ilkAsil.tutar) : null;
+    var yil = durum.takipTarihi ? +durum.takipTarihi.slice(0, 4) : null, mk = yil ? O.maktuHarc(aktif, yil) : null;
+    function tl(x) { return x > 0 ? H.kurus(x).toLocaleString("tr-TR", { minimumFractionDigits: 2 }) : ""; }
+    function feri(ad, tutar) { var k = bosKalem(ad, "feri"); k.tutar = tutar || ""; durum.kalemler.push(k); kalemleriKur(); }
+    function masraf(ac, tutar, tarih) { durum.masraflar.push({ tarih: tarih, aciklama: ac, tutar: tutar }); masraflariKur(); }
+    if (/basvurmaYil|suret|haciz/.test(ne) && !mk) {
+      alert(yil ? yil + " yılının harç tutarları programda yok; tutarı kendiniz yazın." : "Önce takip tarihini girin: harç tutarı takip yılına göre değişir.");
+    }
+    switch (ne) {
+      case "asil": durum.kalemler.push(bosKalem("Asıl alacak", "asil")); kalemleriKur(); break;
+      case "islemis": feri("İşlemiş faiz"); break;
+      case "akdi": feri("Akdi faiz"); break;
+      case "bsmvKalem": feri("BSMV"); break;
+      case "ihtar": feri("İhtarname / protesto gideri"); break;
+      case "cek": feri("Çek tazminatı (%10)", tl(asilTutar * 0.10)); break;
+      case "komisyon": feri("Komisyon (binde 3)", tl(asilTutar * 0.003)); break;
+      case "basvurmaYil": if (mk) { durum.basvurma = tl(mk.basvurma); $("basvurma").value = durum.basvurma; } break;
+      case "masraf": masraf("Masraf", "", durum.takipTarihi); break;
+      case "suret": masraf("Vekâletname suret harcı", mk ? tl(mk.vekaletSuret) : "", durum.takipTarihi); break;
+      case "tebligat": masraf("Tebligat gideri", "", ""); break;
+      case "haciz": masraf("Daire dışı haciz harcı", mk ? tl(mk.hacizDisari) : "", ""); break;
+      case "tahsilat": durum.tahsilatlar.push({ tarih: "", tutar: "", harcOrani: "" }); tahsilatlariKur(); break;
+    }
+    hesapla();
+  }
+
+  $("oranSifirla").onclick = function () { durum.oranlarElle = null; oranlariKur(); hesapla(); };
+  $("temizle").onclick = function () { if (confirm("Girilen her şey silinsin mi?")) { durum = bosDurum(); hepsiniKur(); } };
+  $("kaydet").onclick = function () {
+    var blob = new Blob([JSON.stringify({ program: "icra-dosya-hesabi", surum: SURUM, durum: durum }, null, 1)], { type: "application/json" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "dosya-hesabi-" + ((durum.dosyaNo || "kayit").replace(/[^\w\-ğüşıöçĞÜŞİÖÇ]+/g, "_")) + ".json";
+    document.body.appendChild(a); a.click(); a.remove();
+  };
+  $("acDugme").onclick = function () { $("acGiris").click(); };
+  $("acGiris").onchange = function () {
+    var f = this.files[0]; if (!f) return;
+    var okuyucu = new FileReader();
+    okuyucu.onload = function () {
+      try {
+        var j = JSON.parse(okuyucu.result);
+        if (!j || j.program !== "icra-dosya-hesabi" || !j.durum || !j.durum.kalemler) throw new Error("bu programın kaydı değil");
+        if (j.surum !== SURUM) throw new Error("programın eski sürümüyle kaydedilmiş; bilgileri yeniden girin");
+        var b = bosDurum(); Object.keys(b).forEach(function (k) { if (j.durum[k] === undefined) j.durum[k] = b[k]; });
+        durum = j.durum; hepsiniKur();
+      } catch (e) { alert("Dosya açılamadı: " + e.message); }
+    };
+    okuyucu.readAsText(f, "utf-8"); this.value = "";
+  };
+  $("ornek").onclick = function () {
+    if (!confirm("Örnek dosya yüklensin mi? Şu an girilenler silinir.")) return;
+    durum = bosDurum();
+    durum.dosyaNo = "Örnek 2026/1"; durum.takipTarihi = "2026-07-01"; durum.hesapTarihi = "2026-10-26"; durum.harcSecim = "9.1";
+    function k(ad, tutar, tur, faizTur, faizOran) { var x = bosKalem(ad, tur); x.tutar = tutar; if (faizTur) { x.faizTur = faizTur; x.faizOran = faizOran; } return x; }
+    durum.kalemler = [k("Asıl alacak", "250.000,00", "asil", "diger", "48"), k("Akdi faiz", "30.000,00", "feri"),
+                      k("İşlemiş faiz", "4.000,00", "feri"), k("BSMV", "1.700,00", "feri"), k("İhtarname", "150,00", "feri")];
+    durum.masraflar = [{ tarih: "2026-07-01", aciklama: "Masraf", tutar: "4.000,00" }];
+    durum.tahsilatlar = [{ tarih: "2026-09-15", tutar: "50.000,00", harcOrani: "" }];
+    hepsiniKur();
+  };
+
+  /* ---- Hesap ---- */
+  /* Bir kutudan cikarken gelen "change", "input"un zaten yazdigi durumu tekrar getirir: durum ve
+     veri degismediyse yeniden cizme (bosuna is). Not: 26.10.2026'da bir testte tiklama kayboldu
+     sanildi; deneyle bulundu ki yalniz Playwright'in TAM SAYFA ekran goruntusunden hemen sonra
+     oluyor (sayfa goruntu oncesi kaydirmaya sicriyor). Gercek kullaniciyi etkilemiyor. */
+  var sonImza = null;
+  function hesapla() {
+    var kayit = JSON.stringify(durum), imza = veriSurumu + "|" + kayit;
+    if (imza === sonImza) return;
+    sonImza = imza;
+    try { localStorage.setItem(ANAHTAR, kayit); } catch (e) { /* tarayici izin vermiyor: kayit yok, hesap yine calisir */ }
+    var hatali = [];
+    function n(s, ad) { var x = sayiOku(s); if (isNaN(x)) { hatali.push(ad + ": \"" + s + "\""); return null; } return x; }
+    $("vekaletElleKap").hidden = durum.vekalet.mod !== "elle";
+    var tab = tablolar(), elle = durum.oranlarElle;
+    var girdi = {
+      takipTarihi: durum.takipTarihi, hesapTarihi: durum.hesapTarihi, gunYil: +durum.gunYil,
+      harcOrani: durum.harcSecim === "elle" ? n(durum.harcElle, "Tahsil harcı oranı") : +durum.harcSecim,
+      kalemler: durum.kalemler.map(function (k, i) {
+        var ad = k.ad || (i + 1) + ". kalem";
+        return { ad: ad, tutar: n(k.tutar, ad + " tutarı"), tur: k.tur, faizTur: k.faizTur, faizOran: n(k.faizOran, ad + " faiz oranı"),
+                 oncekiBas: durum.oncekiAcik ? k.oncekiBas : "", oncekiTur: k.oncekiTur,
+                 oncekiOran: durum.oncekiAcik ? n(k.oncekiOran, ad + " önceki faiz oranı") : null };
+      }),
+      vergiler: {}, basvurmaHarci: n(durum.basvurma, "Başvurma harcı"),
+      masraflar: durum.masraflar.map(function (m) { return { tarih: m.tarih, aciklama: m.aciklama, tutar: n(m.tutar, (m.aciklama || "Masraf") + " tutarı") }; }),
+      vekalet: { mod: durum.vekalet.mod, tutar: n(durum.vekalet.tutar, "Vekâlet ücreti"), suresinde: durum.vekalet.suresinde },
+      vekaletTarifeleri: O.vekaletTarifeleri(aktif),
+      tahsilatlar: durum.tahsilatlar.map(function (t) {
+        return { tarih: t.tarih, tutar: n(t.tutar, trT(t.tarih) + " ödemesi"), harcOrani: t.harcOrani === "" ? null : +t.harcOrani };
+      }),
+      oranlar: elle
+        ? { yasal: elle.yasal.map(function (d) { return { bas: d.bas, oran: n(d.oran, "Yasal faiz tablosu") }; }),
+            ticari: elle.ticari.map(function (d) { return { bas: d.bas, oran: n(d.oran, "Ticari faiz tablosu") }; }) }
+        : { yasal: tab.yasal, ticari: tab.ticari },
+      oranKesinSon: elle ? null : tab.kesinSon
+    };
+    Object.keys(VERGI_ADLARI).forEach(function (a) { girdi.vergiler[a] = n(durum.vergiler[a], VERGI_ADLARI[a] + " oranı"); });
+    goster(H.hesapla(girdi), hatali);
+  }
+
+  /* ---- Sonuc: UYAP Dosya Hesabi cizelgesi + dokumler ---- */
+  function goster(r, hatali) {
+    var el = $("sonuc"), h = [];
+    $("tkmCanli").textContent = r.hata ? "—" : para(r.ozet.tkm);
+    h.push("<div class='yazdir-baslik'><h1>DOSYA HESABI</h1></div>");
+    if (hatali.length) h.push("<div class='kutu hata'><b>Sayı olarak okunamayan kutular (hesaba katılmadı):</b><ul><li>" +
+      hatali.map(kac).join("</li><li>") + "</li></ul></div>");
+    if (r.hata) { el.innerHTML = h.join("") + "<div class='kutu bilgi'>" + kac(r.hata) + "</div>"; return; }
+    var z = r.ozet;
+    h.push("<h2 class='ekran'>Dosya hesabı</h2><dl class='belge-ust'>" +
+      (durum.dosyaNo ? "<dt>Dosya No</dt><dd>" + kac(durum.dosyaNo) + "</dd>" : "") +
+      "<dt>Takip Tarihi</dt><dd>" + trT(r.takipTarihi) + "</dd><dt>Hesap Tarihi</dt><dd>" + trT(r.hesapTarihi) +
+      " <span class='kucuk'>(" + r.gun + " gün)</span></dd></dl>");
+
+    var sira = 0;
+    h.push("<div class='tablo-kap'><table class='cizelge'><thead><tr><th>Sıra</th><th>Kalem</th><th class='s'>Alacak Tutar</th>" +
+      "<th>Tür</th><th>Faiz Adı</th><th class='s'>Takipten sonra faiz</th></tr></thead><tbody>" +
+      r.kalemler.map(function (k) {
+        var s = "<tr><td>" + (++sira) + "</td><td>" + kac(k.ad) + "</td><td class='s'>" + para(k.tutar) + "</td><td>" +
+          (k.tur === "asil" ? "Asıl alacak" : "Faiz / ferî") + "</td><td>" + kac(k.faizAdi) + "</td><td class='s'>" +
+          (k.tur === "asil" && k.faizAdi ? para(k.sonra) + "<div class='kucuk'>" + k.sonraGun + " gün" +
+            (k.kapandi ? ", " + trT(k.kapandi) + "'de kapandı" : "") + "</div>" : "") + "</td></tr>";
+        if (k.islemis > 0) s += "<tr><td>" + (++sira) + "</td><td>" + kac(k.ad) + " — takipten önceki faiz <span class='kucuk'>(program hesapladı, " +
+          k.islemisGun + " gün)</span></td><td class='s'>" + para(k.islemis) + "</td><td>Faiz / ferî</td><td>" + kac(k.oncekiAdi) + "</td><td></td></tr>";
+        return s;
+      }).join("") + "</tbody></table></div>");
+
+    function satir(isaret, ad, tutar, ac, sinif) {
+      var cls = (sinif || "") + (!sinif && !(tutar > 0) ? "sifir" : "");
+      return "<tr" + (cls ? " class='" + cls + "'" : "") + "><td class='isaret'>" + isaret + "</td><td>" + ad +
+        (ac ? " <span class='ac'>" + ac + "</span>" : "") + "</td><td class='s'>" + para(tutar) + "</td></tr>";
+    }
+    var v = r.vekalet, vekEtiket = "";
+    if (v && v.ucret !== null && v.ucret !== undefined) vekEtiket = v.elle ? "(elle)" : (v.maktu ? "(Maktu)" : "(Nispi)") + (v.suresinde ? "(¾)" : "(Tam)");
+    var vergiSatirlari = Object.keys(VERGI_ADLARI).map(function (a) {
+      return satir("+", VERGI_ADLARI[a] + (z.vergiOran[a] ? " (" + yuzde(z.vergiOran[a]) + ")" : ""), z.vergi[a]);
+    }).join("");
+    h.push("<div class='tablo-kap' style='margin-top:14px'><table class='kapak'>" +
+      satir("", "Takipte Kesinleşen Miktar", z.tkm, "", "ara") +
+      satir("+", "Harç Miktarı (" + yuzde(z.harcOrani) + ")", z.harc, z.tekOran ? "" : "ödemeler farklı oranlarla") +
+      satir("+", "Başvurma Harcı", z.basvurma) +
+      satir("+", "Toplam Faiz", z.faiz, "takipten sonra, " + r.gun + " gün") +
+      satir("+", "Vekâlet Ücreti " + vekEtiket, z.vekalet) +
+      satir("+", "Masraf", z.masraf) +
+      vergiSatirlari +
+      satir("=", "Yekûn Alacak", z.yekun, "", "ara") +
+      satir("−", "Yatan Para", z.yatan) +
+      satir("=", "Bakiye Borç", z.bakiye, "", "son") +
+      satir("", "Borçluya İade Edilecek Tutar", z.iade) +
+      "</table></div>");
+    if (v && v.ucret !== null && v.ucret !== undefined && !v.elle) {
+      h.push("<p class='kucuk'>Avukatlık Ücret Tarifesi (" + kac(v.tarife) + ", md. 11) gereğince " + para(v.ucret) + " " +
+        (v.maktu ? "maktu" : "nispi") + " vekâlet ücreti: takip tutarı " + para(v.takipTutari) + " → " +
+        (v.maktu ? "maktu" + (v.kirpildi ? ", asıl alacağı geçemeyeceği için " + para(v.tam) : " " + para(v.tam))
+                 : v.dilimler.map(function (d) { return para(d.tutar) + " × " + yuzde(d.oran) + " = " + para(d.ucret); }).join(" + ") + " = " + para(v.tam)) +
+        (v.suresinde ? "; ödeme süresinde ödendiği için ¾" : "") + ".</p>");
+    }
+    var uyarilar = r.uyarilar.slice();
+    if (durum.oranlarElle) uyarilar.unshift("Faiz tabloları elle değiştirildi; güncel oranlar kullanılmadı.");
+    if (uyarilar.length) h.push("<div class='kutu uyari'><b>Dikkat:</b><ul><li>" + uyarilar.map(kac).join("</li><li>") + "</li></ul></div>");
+
+    if (r.tahsilatlar.length) {
+      var t = r.tahsilatlar;
+      function tt(alan) { return H.kurus(t.reduce(function (s, x) { return s + x[alan]; }, 0)); }
+      h.push("<h3>Ara ödemeler nereye sayıldı</h3><div class='tablo-kap'><table><thead><tr><th>Tarih</th><th class='s'>Yatan</th><th class='s'>Harç oranı</th>" +
+        "<th class='s'>Masrafa</th><th class='s'>Faiz / ferî kalemlere</th><th class='s'>Takip s. faiz ve vergiye</th><th class='s'>Asıl alacağa</th>" +
+        "<th class='s'>Harca</th><th class='s'>İade</th></tr></thead><tbody>" +
+        t.map(function (o) {
+          return "<tr><td>" + trT(o.tarih) + "</td><td class='s'>" + para(o.tutar) + "</td><td class='s'>" + yuzde(o.harcOrani) +
+            "</td><td class='s'>" + para(o.masraf) + "</td><td class='s'>" + para(o.feri) + "</td><td class='s'>" + para(o.sonra) +
+            "</td><td class='s'>" + para(o.asil) + "</td><td class='s'>" + para(o.harc) + "</td><td class='s'>" + para(o.iade) + "</td></tr>";
+        }).join("") + "<tr><td><b>Toplam</b></td><td class='s'><b>" + para(tt("tutar")) + "</b></td><td></td><td class='s'>" + para(tt("masraf")) +
+        "</td><td class='s'>" + para(tt("feri")) + "</td><td class='s'>" + para(tt("sonra")) + "</td><td class='s'>" + para(tt("asil")) +
+        "</td><td class='s'>" + para(tt("harc")) + "</td><td class='s'>" + para(tt("iade")) + "</td></tr></tbody></table></div>");
+    }
+    var k = z.kalan;
+    h.push("<p class='kucuk'><b>Bakiye borcun içinde:</b> masraf ve vekâlet " + para(k.masraf) + " · faiz / ferî kalemler " + para(k.feri) +
+      " · takipten sonraki faiz ve vergiler " + para(k.sonra) + " · asıl alacak " + para(k.asil) + " · tahsil harcı " + para(k.harc) + "</p>");
+    h.push("<p class='kucuk'><b>Harç:</b> " + (z.tekOran
+      ? "takipte kesinleşen miktar " + para(z.tkm) + " × " + yuzde(z.harcOrani) + " = " + para(z.harc) + "."
+      : "ödemelerin harç matrahı " + para(z.odenenMatrah) + " kendi oranlarıyla + kalan " + para(z.kalanMatrah) + " × " + yuzde(z.harcOrani) + " = " + para(z.harc) + ".") +
+      " Takipten sonra işleyen faiz, masraf ve vekâlet ücreti harca girmez (Harçlar K. md. 20). Peşin harç bu harca mahsup edilir," +
+      " borçlunun ödeyeceği toplamı değiştirmez (md. 29). Cezaevi harcı (%" + O.CEZAEVI_YUZDE + ") borçluya yüklenemez (2548 s.K. md. 1)," +
+      " bu yüzden hesaba girmedi; dosya tamamen tahsil edilirse alacaklıya ödenecek paradan yaklaşık " + para(z.cezaevi) + " kesilir.</p>");
+    h.push("<div class='kutu bilgi ekran'><b>Kesinleşmemiş noktalar, icra dairesinde teyit edin:</b><ul>" +
+      "<li>Kısmi ödemede tahsil harcı o anda ödemenin <i>içinden</i> mi ayrılıyor? Program ödemeyi önce masrafa, faize ve asıl alacağa sayıyor; harcı en sona bırakıyor.</li>" +
+      "<li>UYAP'taki masraf tutarı peşin harcı da içeriyor mu? İçeriyorsa, harç tam alındığı için peşin harç iki kez sayılmış olur.</li>" +
+      "<li>Takip talebinde \"faizin %5'i BSMV\" istendiyse takipten sonraki faize de BSMV yazılmalı mı?</li>" +
+      "<li>Masrafa ve vekâlet ücretine faiz işletilmiyor.</li>" +
+      "<li>Yabancı para, ipotek limiti ve kira/tahliye takipleri bu programın kapsamında değil.</li></ul></div>");
+    h.push("<p class='kucuk'>Dayanak: İİK md. 15, 59, 138 · TBK md. 100 · 3095 s.K. md. 1-3 · Harçlar K. md. 20, 23, 24, 28, 29 ve 1 sayılı tarife · " +
+      "2548 s.K. md. 1 · AAÜT md. 11 · Merkez Bankası reeskont ve avans oranları (" + trT(aktif.kontrol) + " kontrolü). " +
+      "Hesap yardımcıdır; resmî hesap icra müdürlüğünündür.</p>");
+    var y = window.scrollY;
+    el.innerHTML = h.join("");
+    if (window.scrollY !== y) window.scrollTo(0, y);   // yeniden cizim sayfayi kaydirmasin
+  }
+
+  if (/^https?:$/.test(location.protocol)) $("indir").hidden = false;   // dosyadan acilinca indirme anlamsiz
+  hepsiniKur();
+  durumYaz();
+  tazele();
+})();
+
+</script>
+</body>
+</html>

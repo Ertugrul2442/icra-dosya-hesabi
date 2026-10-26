@@ -1,0 +1,2 @@
+# Windows'ta CRLF, GitHub Actions'taki bash adimlarini bozar (nafaka projesinde yasandi).
+* text=auto eol=lf

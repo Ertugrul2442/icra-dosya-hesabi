@@ -1,0 +1,53 @@
+name: Testler
+
+# Her gönderimde bütün testler: motor, veri kuralları, okuyucular, site kaynaklarla güncel mi,
+# yayına giden sayfa, tarayıcıda davranış (internet taklitli) ve motordan bağımsız gün gün kıyas.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Paketler ve tarayıcı
+        run: |
+          pip install --quiet pymupdf playwright
+          python -m playwright install --with-deps chromium
+
+      - name: Hesap motoru
+        run: node test_hesap.js
+
+      - name: Veri ve kurallar
+        run: node test_veri.js
+
+      - name: Kaynak okuyucuları
+        run: python test_veri_cek.py
+
+      - name: Site kaynaklarla güncel mi
+        run: node site_yap.js --kontrol
+
+      - name: Yayına giden sayfa
+        run: node test_site.js
+
+      - name: Tarayıcıda (internet taklitli)
+        env:
+          CI: "1"
+        run: python test_tarayici.py
+
+      - name: Motordan bağımsız gün gün kıyas (400 dosya)
+        run: python dogrulama/gun_gun.py 400
+
+      - name: Hatırlatıcı
+        run: node aaut_kontrol.js || [ $? -eq 2 ]

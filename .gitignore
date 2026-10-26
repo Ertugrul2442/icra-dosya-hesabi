@@ -1,0 +1,9 @@
+# Uretilen ya da yerel dosyalar - depoya girmez
+dagitim/
+veri.js
+veri/.commit_mesaji
+aaut_hatirlatma.md
+kaynak/
+__pycache__/
+node_modules/
+*.png
