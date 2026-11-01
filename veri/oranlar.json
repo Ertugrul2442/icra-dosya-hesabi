@@ -1,7 +1,7 @@
 {
  "surum": 1,
  "aciklama": "Icra Dosya Hesabi verisi. tcmb ve harc'i robot (veri_cek.py) her gun resmi kaynaktan tazeler; vekalet elle tutulur.",
- "kontrol": "2026-10-26",
+ "kontrol": "2026-11-01",
  "tcmb": {
   "kaynak": "https://www.tcmb.gov.tr/wps/wcm/connect/TR/TCMB+TR/Main+Menu/Temel+Faaliyetler/Para+Politikasi/Reeskont+ve+Avans+Faiz+Oranlari",
   "sutunlar": [
